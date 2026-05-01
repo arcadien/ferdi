@@ -33,7 +33,7 @@ Requirements are linked to technical specifications in `technical-specifications
 ### TRQ-001 — FastAPI Skeleton
 
 - **Date:** 2026-05-01
-- **Status:** Validated
+- **Status:** In Progress
 - **Validated:** 2026-05-01
 - **Spec:** SPEC-001
 
