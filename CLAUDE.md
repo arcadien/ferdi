@@ -37,6 +37,30 @@ Vocal agent for Star Citizen: VoiceAttack → FastAPI → Claude Vision → pydi
 - Refactor only happens after all tests are green; tests must stay green throughout.
 - `requirements.md` and `technical-specifications.md` must always be sufficient for another agent or developer to re-implement any feature from scratch.
 
+## Agent architecture
+
+Two specialized sub-agents handle all work. Commands orchestrate them.
+
+### requirements-analyst
+
+**Tools:** Read, Write, Edit — no shell execution.
+
+Responsibilities:
+- Write and update `requirements.md` and `technical-specifications.md`
+- Write test code (Phase 1 of TDD)
+- Write implementation code (Phase 2 of TDD)
+- Refactor code (Phase 3 of TDD)
+- Update requirement and spec statuses
+
+### test-runner
+
+**Tools:** Bash, Read — no file writes.
+
+Responsibilities:
+- Discover and run the full test suite
+- Report RED / GREEN status with structured output
+- List each test with pass/fail and failure details
+
 ## Requirement types
 
 | Type | Prefix | When to use |
@@ -76,6 +100,9 @@ ferdi/
 ├── technical-specifications.md  # Technical specs linked to requirements (SPEC-NNN)
 ├── CLAUDE.md                    # This file
 └── .claude/
+    ├── agents/
+    │   ├── requirements-analyst.md   # Reads/writes files, writes code
+    │   └── test-runner.md            # Runs tests, reports RED/GREEN
     └── commands/
         ├── document.md
         ├── validate.md

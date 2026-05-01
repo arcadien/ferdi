@@ -19,13 +19,17 @@ Valid statuses: `Draft`, `Validated`, `In Progress`, `Implemented`, `Refactored`
 | Refactored | — (terminal) |
 | Cancelled | — (terminal) |
 
-Warn the user if the requested transition is not in the table above, but allow it if they confirm.
+Warn the user if the requested transition is not listed above, but allow it if they confirm.
 
 ## Instructions
 
-1. Parse the requirement ID and new status from $ARGUMENTS.
-2. In `requirements.md`, find `### <REQ-ID>:` and replace its `**Status:**` line.
-3. In `technical-specifications.md`, find the `## SPEC-NNN` block whose heading contains `(<REQ-ID>)` and replace its `**Status:**` line.
-4. Confirm: show requirement ID, spec ID, old status → new status.
+Delegate to the **requirements-analyst** agent:
 
-If the ID is not found, list all existing requirement IDs grouped by type.
+> Update the status of `<REQ-ID>` to `<new-status>`.
+> 1. In `requirements.md`, find `### <REQ-ID>:` and replace its `**Status:**` line.
+> 2. In `technical-specifications.md`, find the `## SPEC-NNN` block containing `(<REQ-ID>)` and replace its `**Status:**` line.
+> 3. Return: requirement ID, spec ID, old status, new status.
+>
+> If the ID is not found, list all existing requirement IDs grouped by type.
+
+Relay the agent's result to the user.

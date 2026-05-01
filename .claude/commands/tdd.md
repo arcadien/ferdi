@@ -1,75 +1,98 @@
-Execute the full TDD cycle for requirement $ARGUMENTS: write failing tests, implement, verify all tests pass, then offer a refactor phase.
+Execute the full TDD cycle for requirement $ARGUMENTS.
 
 ## Expected input format
 
 `/tdd <REQ-ID>`
 
+---
+
 ## Pre-condition check
 
-Read `requirements.md`. Locate `### <REQ-ID>:` and check `**Status:**`.
-- If status is `Draft`: stop. Tell the user the requirement must be validated first (`/validate <REQ-ID>`).
-- If status is `Validated` or `In Progress`: continue.
-- If status is `Implemented` or `Refactored`: stop. Tell the user the requirement is already done.
-
-Read `technical-specifications.md` and locate the linked `SPEC-NNN` block. Use it to guide test and implementation decisions.
+Before starting, read `requirements.md` and check the status of `<REQ-ID>`:
+- `Draft` → stop. Tell the user to run `/validate <REQ-ID>` first.
+- `Implemented` or `Refactored` → stop. Tell the user the requirement is already done.
+- `Validated` or `In Progress` → continue.
 
 ---
 
 ## Phase 1 — Write failing tests (RED)
 
-1. Based on the acceptance criteria in the requirement and the specification in `technical-specifications.md`, write one test per acceptance criterion.
-2. Tests must be placed in the appropriate test file(s) for this project. Follow existing test conventions (file location, naming, framework).
-3. Each test must:
-   - Have a name that maps clearly to an acceptance criterion (e.g. `test_brq001_lands_on_pad_when_requested`)
-   - Be written to FAIL with the current codebase (no implementation yet)
-   - Assert the observable behaviour, not implementation details
-4. After writing all tests, run them:
-   ```
-   <test command for this project>
-   ```
-5. Confirm the tests are RED (failing). If any test passes unexpectedly, investigate — it may mean the behaviour already exists or the test is not asserting correctly. Fix before continuing.
-6. Update `**Status:**` in `requirements.md` to `In Progress`.
-7. Report to the user:
-   - List of test names written
-   - Test run output confirming RED state
-   - Ask the user to confirm before proceeding to implementation
+**Delegate to the requirements-analyst agent:**
 
-**Wait for user confirmation before starting Phase 2.**
+> Read `requirements.md` for `<REQ-ID>` and its linked SPEC in `technical-specifications.md`.
+>
+> Write one failing test per acceptance criterion.
+> - Follow existing project test conventions (location, naming, framework).
+> - Test names must reference the requirement ID (e.g. `test_brq001_description`).
+> - Tests must fail with the current codebase. Do not write any implementation code.
+> - Update `**Status:**` to `In Progress` in `requirements.md` and the linked SPEC in `technical-specifications.md`.
+> - Return the list of test names written and the files modified.
+
+**Then delegate to the test-runner agent:**
+
+> Run the test suite. Report the execution result.
+> We expect the new tests to FAIL (RED). If any new test passes, flag it explicitly.
+
+Relay both agents' summaries to the user.
+
+**STOP. Ask the user:**
+> Tests are written. Are they RED as expected? Confirm to proceed to implementation, or describe what needs to be fixed.
+
+Wait for explicit user confirmation before continuing.
 
 ---
 
 ## Phase 2 — Implement (GREEN)
 
-1. Write the minimum code needed to make the failing tests pass. Do not add behaviour beyond what the tests require.
-2. Run the **full test suite** (not just the new tests):
-   ```
-   <test command for this project>
-   ```
-3. All tests must be GREEN.
-   - If new tests still fail: fix the implementation, repeat.
-   - If previously passing tests now fail: fix the regression before continuing.
-4. Once all tests are green, report:
-   - Full test run output
-   - Files created or modified
-   - Ask the user: "All tests are green. Do you want to proceed with a refactor? (yes / no)"
+**Delegate to the requirements-analyst agent:**
 
-**Wait for user answer before starting Phase 3.**
+> Implement the minimum code to make the failing tests for `<REQ-ID>` pass.
+> Do not add behaviour beyond what the tests require.
+> Return the list of files created or modified.
+
+**Then delegate to the test-runner agent:**
+
+> Run the **full test suite**. Report the complete execution result.
+> We need ALL tests to pass (GREEN), including pre-existing ones.
+
+Relay both agents' summaries to the user.
+
+If any test is still RED: delegate back to requirements-analyst to fix, then re-run test-runner. Repeat until GREEN.
+
+Once GREEN, **STOP. Ask the user:**
+> All tests are GREEN. Do you want to run a refactor phase? (yes / no)
+
+Wait for the user's answer.
 
 ---
 
 ## Phase 3 — Refactor (optional)
 
-Only execute if the user answered yes.
+Only execute if the user answered **yes**.
 
-1. Refactor the code produced in Phase 2: improve readability, remove duplication, simplify logic. Do not change behaviour.
-2. After every meaningful change, run the full test suite and confirm it stays GREEN.
-3. If any test goes RED during refactor: revert the last change and report to the user.
-4. Once refactor is complete and tests are GREEN:
-   - Update `**Status:**` in `requirements.md` to `Refactored`
-   - Update the matching `SPEC-NNN` status in `technical-specifications.md` to `Refactored`
-   - Report a summary of refactor changes
+**Delegate to the requirements-analyst agent:**
 
-If the user skipped refactor:
-- Update `**Status:**` in `requirements.md` to `Implemented`
-- Update the matching `SPEC-NNN` status in `technical-specifications.md` to `Implemented`
-- Report implementation summary
+> Refactor the code produced for `<REQ-ID>`: improve readability, remove duplication, simplify logic.
+> Do not change observable behaviour. Do not modify test files.
+> Return a list of changes made.
+
+**Then delegate to the test-runner agent:**
+
+> Run the full test suite. All tests must still be GREEN after refactor.
+
+Relay both agents' summaries to the user.
+
+If any test went RED: tell the user and delegate back to requirements-analyst to revert or fix.
+
+---
+
+## Closing
+
+**Delegate to the requirements-analyst agent:**
+
+> Update `**Status:**` in `requirements.md` for `<REQ-ID>`:
+> - If refactor was done: set `Refactored`
+> - Otherwise: set `Implemented`
+> Do the same for the linked SPEC in `technical-specifications.md`.
+
+Report the final status to the user.
