@@ -1,5 +1,6 @@
-# Claude Code local config
-.claude/
+# Claude Code local config (personal settings ignored, shared config tracked)
+.claude/settings.local.json
+.claude/todos/
 
 # Python
 __pycache__/
