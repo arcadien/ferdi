@@ -12,7 +12,7 @@ enough information to automate or reproduce any implementation independently.
 
 - **Requirement:** TRQ-001
 - **Date:** 2026-05-01
-- **Status:** Draft
+- **Status:** Validated
 - **Requirement type:** technical
 
 ### Overview
