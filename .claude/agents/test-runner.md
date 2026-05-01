@@ -1,6 +1,7 @@
 ---
 name: test-runner
 description: Discovers and runs the project test suite, reports RED or GREEN status with structured execution summaries. Never writes or modifies source files.
+model: claude-haiku-4-5-20251001
 tools: Bash, Read
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: requirements-analyst
 description: Analyzes user requests, writes and maintains requirements.md and technical-specifications.md, writes test code and implementation code, updates requirement statuses. Never executes shell commands.
+model: claude-haiku-4-5-20251001
 tools: Read, Write, Edit
 ---
 
