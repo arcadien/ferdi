@@ -10,15 +10,32 @@ Vocal agent for Star Citizen: VoiceAttack → FastAPI → Claude Vision → pydi
 
 ## Development workflow
 
-Every user request that adds or changes behaviour must be documented before implementation:
+```
+/document <type> <description>
+        │
+        ▼
+   Status: Draft
+   (user reviews requirement and spec)
+        │
+        ▼ /validate <REQ-ID>
+   Status: Validated
+        │
+        ▼ /tdd <REQ-ID>   ← Phase 1: write tests → RED
+   Status: In Progress    ← Phase 2: implement   → GREEN (all tests)
+        │                 ← Phase 3: refactor     → GREEN (optional)
+        ▼
+   Status: Implemented
+      or Refactored
+```
 
-1. Run `/document <type> <description>` — creates a typed requirement entry in `requirements.md`
-   and a linked SPEC-NNN entry in `technical-specifications.md`.
-2. Implement the feature according to the specification.
-3. Run `/update-status <REQ-ID> Implemented` once the feature is complete and tested.
+### Rules
 
-The two documentation files must always be sufficient for another developer (or agent) to
-re-implement the feature from scratch without reading the conversation history.
+- **No code is written before a requirement reaches `Validated` status.**
+- The user must explicitly run `/validate` to approve a requirement.
+- Tests are written before implementation (TDD). Tests must be RED before implementation starts.
+- The full test suite must be GREEN before a requirement is marked `Implemented`.
+- Refactor only happens after all tests are green; tests must stay green throughout.
+- `requirements.md` and `technical-specifications.md` must always be sufficient for another agent or developer to re-implement any feature from scratch.
 
 ## Requirement types
 
@@ -29,24 +46,39 @@ re-implement the feature from scratch without reading the conversation history.
 | `nonfunctional` | NFR-NNN | Performance, security, reliability, maintainability, scalability |
 | `ui` | UIR-NNN | User interactions, visual elements, UX flows |
 
-Each type counter is independent (BRQ-001, TRQ-001, NFR-001, UIR-001 can all coexist).
+Each prefix has its own independent counter.
+
+## Requirement statuses
+
+| Status | Meaning |
+|--------|---------|
+| `Draft` | Created, pending user review |
+| `Validated` | Approved by the user — TDD cycle may begin |
+| `In Progress` | Tests written (RED), implementation underway |
+| `Implemented` | All tests GREEN, no refactor done |
+| `Refactored` | All tests GREEN after a refactor pass |
+| `Cancelled` | Dropped |
 
 ## Available custom commands
 
 | Command | Purpose |
 |---------|---------|
 | `/document <type> <description>` | Capture a typed requirement and write its technical specification |
-| `/update-status <REQ-ID> <status>` | Update status (`Draft`, `In Progress`, `Implemented`, `Cancelled`) |
+| `/validate <REQ-ID>` | Mark a requirement as validated by the user (required before TDD) |
+| `/tdd <REQ-ID>` | Run the full TDD cycle: write tests (RED) → implement (GREEN) → refactor (optional) |
+| `/update-status <REQ-ID> <status>` | Manually override status |
 
 ## Repository layout
 
 ```
 ferdi/
-├── requirements.md              # All requirements, grouped by type (BRQ / TRQ / NFR / UIR)
+├── requirements.md              # All requirements grouped by type (BRQ / TRQ / NFR / UIR)
 ├── technical-specifications.md  # Technical specs linked to requirements (SPEC-NNN)
 ├── CLAUDE.md                    # This file
 └── .claude/
-    └── commands/                # Custom Claude Code slash commands
+    └── commands/
         ├── document.md
+        ├── validate.md
+        ├── tdd.md
         └── update-status.md
 ```

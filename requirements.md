@@ -3,16 +3,24 @@
 This file documents all user requests as formal requirements for the **ferdi** project.
 Requirements are linked to technical specifications in `technical-specifications.md`.
 
-Requirements are created via `/document <type> <description>` and updated via `/update-status <ID> <status>`.
+| Command | Action |
+|---------|--------|
+| `/document <type> <description>` | Create a new requirement (status: Draft) |
+| `/validate <REQ-ID>` | Approve a requirement (status: Validated) — required before TDD |
+| `/tdd <REQ-ID>` | Start TDD cycle: RED → GREEN → optional refactor |
 
 ## Requirement types and ID prefixes
 
-| Type | Prefix | Description |
-|------|--------|-------------|
-| Business | BRQ-NNN | Stakeholder value, product goals |
-| Technical | TRQ-NNN | Technical constraints, integrations |
-| Non-Functional | NFR-NNN | Performance, security, reliability, maintainability |
-| UI | UIR-NNN | User interactions, visual elements, UX |
+| Type | Prefix |
+|------|--------|
+| Business | BRQ-NNN |
+| Technical | TRQ-NNN |
+| Non-Functional | NFR-NNN |
+| UI | UIR-NNN |
+
+## Status lifecycle
+
+`Draft` → `Validated` → `In Progress` → `Implemented` / `Refactored`
 
 ---
 
