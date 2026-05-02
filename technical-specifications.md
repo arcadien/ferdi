@@ -415,3 +415,134 @@ Acceptance criteria are verified through:
    - Include only user-facing types
    - Exclude chore, ci, style, refactor, test commits
 6. **Configuration file validation** — `cliff.toml` is valid TOML and is used by git-cliff during execution
+
+---
+
+## SPEC-005 — Pluggable STT Provider Interface (TRQ-005)
+
+- **Requirement:** TRQ-005
+- **Date:** 2026-05-02
+- **Status:** Draft
+- **Requirement type:** technical
+
+### Overview
+
+The ferdi action engine must be decoupled from any concrete speech-to-text mechanism. This is achieved by defining an abstract `STTProvider` interface that all provider implementations must satisfy. A factory function (or equivalent configuration entry point) is responsible for selecting and instantiating the correct provider at startup based on an environment variable or config file. The engine depends solely on the interface, making it trivially testable and extensible.
+
+### Architecture
+
+```
+Configuration (env var / config file)
+        │
+        │  STT_PROVIDER=static | whisper | webapi
+        │
+        ▼
+┌─────────────────────────┐
+│  Provider Factory       │
+│  build_stt_provider()   │
+└─────────────────────────┘
+        │
+        │  returns an STTProvider instance
+        │
+        ▼
+┌─────────────────────────────────────────────────┐
+│  Action Engine                                  │
+│  depends only on STTProvider (abstract)         │
+│                                                 │
+│  provider.listen() → str                        │
+│  → processing pipeline                          │
+└─────────────────────────────────────────────────┘
+        ▲               ▲               ▲
+        │               │               │
+┌───────────┐  ┌────────────┐  ┌────────────────┐
+│WhisperSTT │  │WebAPISTT   │  │StaticSTT       │
+│(mic + fw) │  │(HTTP endpt)│  │(fixed string)  │
+└───────────┘  └────────────┘  └────────────────┘
+```
+
+**Components:**
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `STTProvider` | `ferdi/stt/base.py` | Abstract base class defining the interface |
+| `WhisperSTT` | `ferdi/stt/whisper_stt.py` | Microphone recording + faster-whisper transcription |
+| `WebAPISTT` | `ferdi/stt/webapi_stt.py` | HTTP endpoint receiving text from external clients |
+| `StaticSTT` | `ferdi/stt/static_stt.py` | Returns a fixed configured string; no audio |
+| `build_stt_provider()` | `ferdi/stt/factory.py` | Reads configuration and returns the correct provider |
+
+### Interface Contract
+
+```python
+# ferdi/stt/base.py
+from abc import ABC, abstractmethod
+
+class STTProvider(ABC):
+    @abstractmethod
+    def listen(self) -> str:
+        """Block until a voice command is available and return it as text."""
+        ...
+```
+
+All concrete implementations must subclass `STTProvider` and implement `listen() -> str`.
+
+### Provider Specifications
+
+**`StaticSTT`**
+- Constructor: `StaticSTT(text: str)`
+- `listen()` always returns the string passed at construction
+- No audio device, network, or filesystem access
+
+**`WhisperSTT`**
+- Constructor: `WhisperSTT(model: str = "base")`
+- `listen()` records from the default microphone until silence is detected, then runs faster-whisper transcription and returns the result
+
+**`WebAPISTT`**
+- Constructor: `WebAPISTT(host: str = "127.0.0.1", port: int = 8000)`
+- `listen()` blocks until a POST request is received on the `/command` endpoint and returns the `command` field from the request body
+
+### Configuration Entry Point
+
+The factory function reads `STT_PROVIDER` from the environment (or a config file) and returns the appropriate instance:
+
+| `STT_PROVIDER` value | Provider instantiated |
+|----------------------|-----------------------|
+| `static` | `StaticSTT` with text from `STT_STATIC_TEXT` env var |
+| `whisper` | `WhisperSTT` with model from `WHISPER_MODEL` env var (default: `base`) |
+| `webapi` | `WebAPISTT` with host/port from env vars |
+
+Unknown values raise a `ValueError` with a descriptive message.
+
+### Implementation Plan
+
+1. Create `ferdi/stt/` package with `__init__.py`.
+2. Create `ferdi/stt/base.py`: define `STTProvider` abstract base class with `listen() -> str`.
+3. Create `ferdi/stt/static_stt.py`: implement `StaticSTT(text: str)`.
+4. Create `ferdi/stt/whisper_stt.py`: implement `WhisperSTT` (stub or full, depending on faster-whisper availability).
+5. Create `ferdi/stt/webapi_stt.py`: implement `WebAPISTT`.
+6. Create `ferdi/stt/factory.py`: implement `build_stt_provider()` reading from environment.
+7. Update the action engine (or `ferdi/main.py`) to accept an `STTProvider` instance via dependency injection rather than importing any concrete class.
+8. Write tests covering all acceptance criteria.
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `ferdi/stt/__init__.py` | Create | Package marker |
+| `ferdi/stt/base.py` | Create | `STTProvider` abstract interface |
+| `ferdi/stt/static_stt.py` | Create | `StaticSTT` implementation |
+| `ferdi/stt/whisper_stt.py` | Create | `WhisperSTT` implementation |
+| `ferdi/stt/webapi_stt.py` | Create | `WebAPISTT` implementation |
+| `ferdi/stt/factory.py` | Create | `build_stt_provider()` factory |
+| `ferdi/main.py` | Modify | Inject `STTProvider` via dependency injection |
+| `tests/test_stt.py` | Create | Acceptance tests for TRQ-005 |
+
+### Testing
+
+Each acceptance criterion maps to a pytest test in `tests/test_stt.py`:
+
+| Criterion | Test name | Validation method |
+|-----------|-----------|-------------------|
+| Engine imports only the interface | `test_trq005_engine_does_not_import_concrete_stt` | Inspect `ferdi/main.py` imports; assert no concrete STT class is imported |
+| Active provider selectable via config | `test_trq005_factory_selects_provider_from_env` | Set `STT_PROVIDER=static`, call `build_stt_provider()`, assert returns `StaticSTT` |
+| `StaticSTT` triggers same pipeline | `test_trq005_static_stt_triggers_processing_pipeline` | Inject `StaticSTT("raise shields")` into the engine and assert the command reaches the processing pipeline |
+| New provider requires no engine change | `test_trq005_new_provider_requires_only_factory_change` | Subclass `STTProvider` in the test; inject into engine; assert it is called without modifying engine code |

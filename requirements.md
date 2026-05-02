@@ -126,6 +126,29 @@ A `cliff.toml` configuration file must be added at the repository root to config
 - [ ] The workflow can be triggered manually from the GitHub Actions UI with a version string input
 - [ ] The generated release notes correctly group commits by type and exclude non-user-facing types (chore, ci, style)
 
+### TRQ-005 — Pluggable STT Provider Interface
+
+- **Date:** 2026-05-02
+- **Status:** Draft
+- **Spec:** SPEC-005
+
+**Technical constraint:**
+The action engine must not be coupled to any specific speech-to-text mechanism. Different deployment contexts (production, testing, debugging, external clients) require different input sources. The engine must operate identically regardless of how the text arrives.
+
+**Description:**
+The action engine receives text through an abstract `STTProvider` interface. Three concrete implementations must be provided:
+- `WhisperSTT` — handles microphone recording and transcription using faster-whisper locally
+- `WebAPISTT` — exposes an HTTP endpoint that receives text (from VoiceAttack or any external client)
+- `StaticSTT` — returns a fixed configured string without audio (for automated tests and debug)
+
+The active provider is selected via configuration (environment variable or config file). The engine imports and depends only on the interface, never on a concrete implementation.
+
+**Acceptance criteria:**
+- [ ] The action engine imports only the `STTProvider` interface, never a concrete implementation
+- [ ] The active provider is selectable via configuration (environment variable or config file) without modifying engine code
+- [ ] `StaticSTT("raise shields")` triggers the same processing pipeline as a real voice command
+- [ ] Adding a new provider requires modifying only the configuration entry point, not the engine
+
 ## Non-Functional Requirements
 
 <!-- NFR entries go here -->
