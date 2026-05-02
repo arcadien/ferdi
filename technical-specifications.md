@@ -540,7 +540,7 @@ Each acceptance criterion maps to a pytest test in `tests/test_stt_provider.py`:
 
 - **Requirement:** TRQ-006
 - **Date:** 2026-05-02
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-02
 - **Requirement type:** technical
 

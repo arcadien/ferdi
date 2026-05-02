@@ -149,7 +149,7 @@ Define an abstract `STTProvider` interface and a `StaticSTT` concrete implementa
 ### TRQ-006 — WhisperSTT implementation
 
 - **Date:** 2026-05-02
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-02
 - **Spec:** SPEC-006
 
