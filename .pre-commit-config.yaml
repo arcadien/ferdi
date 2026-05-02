@@ -1,0 +1,16 @@
+repos:
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [--force-scope, '--scope-regex=^(api|ui|docs|chore|test|infra|req)?$']
+
+  - repo: local
+    hooks:
+      - id: check-req-commit
+        name: Check requirement file commit type
+        entry: python .pre-commit-hooks/check_req_commit.py
+        language: python
+        stages: [commit-msg]
+        always_run: true
