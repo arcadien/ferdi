@@ -177,3 +177,241 @@ The workflow itself is not unit-tested; its correctness is verified by observing
 - Successful runs on new commits
 - Proper detection of test failures (workflow should fail if any test fails)
 - Correct Python version and dependency installation from pyproject.toml
+
+---
+
+## SPEC-003 — Conventional Commits Enforcement (TRQ-003)
+
+- **Requirement:** TRQ-003
+- **Date:** 2026-05-02
+- **Status:** Implemented
+- **Requirement type:** technical
+
+### Overview
+
+Conventional Commits is a standardized format for git commit messages that enables automated parsing, changelog generation, and semantic versioning. By enforcing this convention locally via pre-commit hooks and in CI via GitHub Actions, the ferdi project maintains a clean, machine-readable commit history that supports downstream automation and improves developer understanding of changes. The convention is enforced at the point of commit (local) and validated again in CI to ensure consistency. Additionally, a custom local `commit-msg` hook ensures that any commit staging changes to `requirements.md` or `technical-specifications.md` must use the `req` commit type, maintaining isolation and auditability of requirement changes.
+
+### Architecture
+
+```
+Developer writes commit message
+        │
+        ▼
+Pre-commit hook (conventional-pre-commit)
+        │
+        ├─ REJECTS non-compliant format (clear error)
+        │
+        └─ ACCEPTS compliant format
+        │
+        ▼
+Commit pushed to GitHub
+        │
+        ▼
+GitHub Actions CI workflow
+        │
+        └─ commitlint or conventional-pre-commit step
+           validates commit message format
+        │
+        ├─ If valid → pass
+        │
+        └─ If invalid → fail workflow
+        │
+        ▼
+Commit history remains clean and parseable
+```
+
+**Components:**
+- `.pre-commit-config.yaml` — pre-commit framework configuration file
+- `conventional-pre-commit` — hook implementation (pre-commit hook type)
+- `pre-commit install --hook-type commit-msg` — local installation command
+- `.github/workflows/ci.yml` — GitHub Actions workflow with commitlint step
+- `pyproject.toml` — dev dependencies include `pre-commit`
+- `CLAUDE.md` — documentation of the convention
+
+**Conventional Commits format:**
+
+```
+<type>[(<scope>)]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Allowed types:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `ci`, `chore`, `req`
+
+**Examples:**
+```
+feat(voice-command): add support for multi-word voice commands
+fix: correct FastAPI endpoint validation
+docs: update README with installation instructions
+ci: add commitlint to GitHub Actions workflow
+req: refine TRQ-003 with requirements.md isolation requirement
+```
+
+### Custom Hook for Requirement Files
+
+The `.pre-commit-config.yaml` includes a second custom local hook (type: `commit-msg`) that enforces isolation of requirement document changes. At commit time, this hook:
+
+1. Runs `git diff --cached --name-only` to retrieve the list of staged files
+2. Checks whether `requirements.md` or `technical-specifications.md` appear in the staged changeset
+3. If either file is staged, it asserts that the commit message starts with `req:` (the `req` type)
+4. If the assertion fails, it exits with a non-zero status and displays a clear error message:
+   ```
+   Error: Commits staging requirements.md or technical-specifications.md must use the 'req' type.
+   Example: req: add new acceptance criterion to TRQ-003
+   ```
+5. If the check passes (or if no requirement files are staged), the hook exits cleanly
+
+### Implementation Plan
+
+1. Create `.pre-commit-config.yaml` at the repository root with:
+   - Hook ID: `conventional-pre-commit`
+   - Hook type: `commit-msg`
+   - Configuration to reject non-compliant commit messages
+2. Document the format and installation in `CLAUDE.md`:
+   - Explain the Conventional Commits specification
+   - Provide examples
+   - Include the command `pre-commit install --hook-type commit-msg`
+3. Add `pre-commit` to the dev dependencies in `pyproject.toml` (if not already present)
+4. Update `.github/workflows/ci.yml` to include a step that validates commit messages using `commitlint` or `conventional-pre-commit`
+5. Test locally by attempting to create a non-compliant commit (should be rejected) and a compliant commit (should be accepted)
+6. Verify that the CI step correctly validates commit messages
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `.pre-commit-config.yaml` | Modify | Add `req` to allowed types list and implement custom `commit-msg` hook for requirement file isolation |
+| `CLAUDE.md` | Modify | Add documentation of Conventional Commits convention and requirement file isolation requirement |
+| `pyproject.toml` | Modify | Add `pre-commit` to dev dependencies (if needed) |
+| `.github/workflows/ci.yml` | Modify | Add commitlint step to CI workflow |
+
+### Testing
+
+Acceptance criteria are verified through:
+
+1. **Local hook installation** — Running `pre-commit install --hook-type commit-msg` succeeds and installs the commit-msg hook
+2. **Non-compliant commit rejection** — Attempting to commit with message like "update code" is rejected with a clear error message
+3. **Compliant commit acceptance** — A commit with message like "feat(api): add new endpoint" is accepted
+4. **CI validation** — GitHub Actions workflow executes the commitlint or conventional-pre-commit step and:
+   - Passes when the triggering commit message is compliant
+   - Fails when the triggering commit message is non-compliant (catches edge cases where the local hook is bypassed)
+5. **Documentation presence** — `CLAUDE.md` contains a "Commit message convention" or similar section explaining the format, allowed types, and examples
+
+---
+
+## SPEC-004 — On-Demand Release Workflow (TRQ-004)
+
+- **Requirement:** TRQ-004
+- **Date:** 2026-05-02
+- **Status:** Draft
+- **Requirement type:** technical
+
+### Overview
+
+GitHub Actions `workflow_dispatch` enables manual triggering of workflows from the GitHub UI. For ferdi, an on-demand release workflow automates the creation of git tags and GitHub Releases without requiring manual CHANGELOG editing or commit operations. The workflow uses `git-cliff` to generate release notes directly from the project's conventional commit history (established by TRQ-003), groups commits by type (feat, fix, etc.), and publishes the generated notes exclusively in the GitHub Release body.
+
+### Architecture
+
+```
+Maintainer triggers release workflow via GitHub UI
+        │
+        │  Provides version input (e.g. v1.0.0)
+        │
+        ▼
+.github/workflows/release.yml (workflow_dispatch)
+        │
+        ├─ Checkout code
+        ├─ Fetch git tags and history
+        ├─ Install git-cliff
+        │
+        ▼
+git-cliff (with cliff.toml config)
+        │
+        ├─ Parse commits since last tag
+        ├─ Group by type (feat, fix, docs, etc.)
+        ├─ Generate markdown release notes
+        └─ Exclude non-user-facing types (chore, ci, style)
+        │
+        ▼
+Create and push git tag (version input)
+        │
+        ▼
+Publish GitHub Release
+        │
+        ├─ Tag: matches version input
+        ├─ Body: git-cliff output
+        └─ No CHANGELOG.md committed
+        │
+        ▼
+Release published on GitHub Releases page
+```
+
+**Components:**
+- `.github/workflows/release.yml` — GitHub Actions workflow definition (YAML)
+- `cliff.toml` — git-cliff configuration for conventional commit grouping
+- `git-cliff` — tool to parse commits and generate release notes
+- `gh` CLI or `softprops/action-gh-release` — publish GitHub Release
+
+**Conventional Commit grouping in cliff.toml:**
+
+```toml
+[changelog]
+
+[[changelog.sections]]
+title = "Features"
+commit_parsers = [{message = "^feat", group = "Features"}]
+
+[[changelog.sections]]
+title = "Bug Fixes"
+commit_parsers = [{message = "^fix", group = "Bug Fixes"}]
+
+[[changelog.sections]]
+title = "Documentation"
+commit_parsers = [{message = "^docs", group = "Documentation"}]
+
+# Skip non-user-facing types
+skip_footers = ["chore", "ci", "style", "refactor", "test"]
+```
+
+### Implementation Plan
+
+1. Create `.github/workflows/release.yml` with:
+   - **Trigger:** `workflow_dispatch`
+   - **Input:** `version` (required string, e.g. `v1.0.0`)
+   - **Steps:**
+     1. Checkout code: `actions/checkout@v4` with full history
+     2. Fetch all tags: `git fetch --tags`
+     3. Install `git-cliff`: via `cargo` or pre-built binary
+     4. Generate release notes: `git-cliff --output CHANGELOG_TEMP.md --config cliff.toml`
+     5. Create git tag: `git tag <version input>`
+     6. Push tag: `git push origin <version input>`
+     7. Publish release: Use `gh release create` or `softprops/action-gh-release@v1` with the generated notes
+2. Create `cliff.toml` at repository root with conventional commit grouping configuration
+3. Verify workflow syntax and test manually via GitHub Actions UI
+4. Confirm release is published with correct tag and notes
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `.github/workflows/release.yml` | Create | GitHub Actions workflow for on-demand release with workflow_dispatch trigger |
+| `cliff.toml` | Create | git-cliff configuration for conventional commit parsing and grouping |
+
+### Testing
+
+Acceptance criteria are verified through:
+
+1. **Workflow syntax validation** — The YAML file must be valid GitHub Actions syntax
+2. **Manual workflow trigger** — The workflow can be triggered via GitHub Actions UI with a version input
+3. **Git tag creation** — After successful run, `git tag` lists the newly created tag
+4. **GitHub Release publication** — A new release appears on the GitHub Releases page with:
+   - Correct tag name (matches version input)
+   - Release notes containing grouped commits (Features, Bug Fixes, Documentation, etc.)
+   - No CHANGELOG.md in the commit history
+5. **Commit grouping** — Release notes correctly:
+   - Group commits by type (feat → Features, fix → Bug Fixes, etc.)
+   - Include only user-facing types
+   - Exclude chore, ci, style, refactor, test commits
+6. **Configuration file validation** — `cliff.toml` is valid TOML and is used by git-cliff during execution
