@@ -4,7 +4,7 @@ repos:
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
-        args: [--force-scope, '--scope-regex=^(api|ui|docs|chore|test|infra|req)?$']
+        args: []
 
   - repo: local
     hooks:
