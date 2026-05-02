@@ -28,6 +28,7 @@ type(scope): description
 - `test`: Test additions or updates
 - `ci`: CI/CD configuration changes
 - `chore`: Build process, dependencies, tooling changes
+- `req`: Changes to `requirements.md` or `technical-specifications.md` — **mandatory** for any commit touching those files
 
 ### Examples
 
@@ -203,7 +204,8 @@ ferdi/
     │   ├── test-writer.md            # Writes failing tests from specs (Haiku)
     │   ├── implementer.md            # Implements code to pass tests (Sonnet)
     │   ├── refactorer.md             # Refactors passing code (Sonnet)
-    │   └── test-runner.md            # Runs tests, reports RED/GREEN (Haiku)
+    │   ├── test-runner.md            # Runs tests, reports RED/GREEN (Haiku)
+    │   └── git-manager.md            # Handles git commits, pushes, PRs (Haiku)
     └── commands/
         ├── document.md
         ├── validate.md
