@@ -104,7 +104,7 @@ Additionally, a custom local `commit-msg` hook rejects any commit that stages `r
 ### TRQ-004 — On-Demand Release Workflow
 
 - **Date:** 2026-05-02
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-02
 - **Spec:** SPEC-004
 
