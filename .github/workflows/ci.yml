@@ -18,7 +18,8 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Validate conventional commits
         run: |
-          pre-commit install --hook-type commit-msg
-          pre-commit run conventional-pre-commit --all-files --hook-stage commit-msg || true
+          pip install pre-commit
+          git log -1 --format=%B > /tmp/commit-msg.txt
+          pre-commit run conventional-pre-commit --hook-stage commit-msg --commit-msg-filename /tmp/commit-msg.txt
       - name: Run tests
         run: pytest tests/ -v
