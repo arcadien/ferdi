@@ -74,6 +74,58 @@ A GitHub Actions workflow must be created to automatically run the pytest test s
 - [ ] The workflow passes (green) on the current codebase
 - [ ] Workflow success is visible in pull request checks and commit status
 
+### TRQ-003 — Conventional Commits Enforcement
+
+- **Date:** 2026-05-02
+- **Status:** Implemented
+- **Validated:** 2026-05-02
+- **Spec:** SPEC-003
+
+**Technical constraint:**
+The ferdi project uses git for version control and GitHub for hosting. Maintaining a consistent, machine-readable commit history is required to support automated changelog generation (TRQ-004). Commits that do not follow a structured format cannot be parsed by changelog tools. Additionally, all changes to `requirements.md` and `technical-specifications.md` must be committed in isolation to keep requirement documents in a consistent, auditable state.
+
+**Description:**
+All commits in the ferdi repository must follow the Conventional Commits specification: `<type>[(<scope>)]: <description>` in English. Allowed types are `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `ci`, `chore`, `req`. Scope is optional. The convention must be enforced both locally (pre-commit hook via the `pre-commit` framework with `conventional-pre-commit`) and in CI (GitHub Actions step). The convention must also be documented in `CLAUDE.md`.
+
+Additionally, a custom local `commit-msg` hook rejects any commit that stages `requirements.md` or `technical-specifications.md` unless the commit message type is `req`. All changes to these files must be committed in isolation using the `req` type and documented in `CLAUDE.md`.
+
+**Acceptance criteria:**
+- [ ] A `.pre-commit-config.yaml` file exists at the repository root and includes the `conventional-pre-commit` hook
+- [ ] Running `pre-commit install --hook-type commit-msg` installs the commit-msg hook locally
+- [ ] A commit that does not follow the Conventional Commits format is rejected by the pre-commit hook with a clear error message
+- [ ] A commit that follows the format is accepted by the hook
+- [ ] The CI workflow (`.github/workflows/ci.yml`) includes a step that validates the commit message of the triggering commit using `conventional-pre-commit` or equivalent
+- [ ] `CLAUDE.md` documents the Conventional Commits format as a mandatory convention for all commits
+- [ ] The `pre-commit` package is listed in the project dev dependencies (`pyproject.toml`)
+- [ ] `req` is listed as an allowed type in `.pre-commit-config.yaml` alongside `feat`, `fix`, etc.
+- [ ] A custom local `commit-msg` hook in `.pre-commit-config.yaml` rejects any commit that stages `requirements.md` or `technical-specifications.md` unless the commit message type is `req`
+- [ ] `CLAUDE.md` documents that all changes to `requirements.md` and `technical-specifications.md` must be committed in isolation using the `req` type
+
+### TRQ-004 — On-Demand Release Workflow
+
+- **Date:** 2026-05-02
+- **Status:** Implemented
+- **Validated:** 2026-05-02
+- **Spec:** SPEC-004
+
+**Technical constraint:**
+The ferdi project uses Conventional Commits (TRQ-003) to maintain a structured git history. Releases are created manually by the maintainer on demand. An automated mechanism is needed to generate release notes from conventional commits, tag the repository, and publish a GitHub Release — without committing a CHANGELOG file to the repository.
+
+**Description:**
+A GitHub Actions workflow must be created at `.github/workflows/release.yml` with a `workflow_dispatch` trigger. The workflow accepts a required version input (e.g. `v1.0.0`). It uses `git-cliff` to generate release notes from conventional commits since the last git tag. It then creates and pushes a git tag for the specified version, and publishes a GitHub Release with the git-cliff-generated notes as the release body. No CHANGELOG.md is committed to the repository; release notes live exclusively in the GitHub Release.
+
+A `cliff.toml` configuration file must be added at the repository root to configure git-cliff's output format (conventional commits grouping by type: feat, fix, etc.).
+
+**Acceptance criteria:**
+- [ ] A `.github/workflows/release.yml` file exists with a `workflow_dispatch` trigger and a required `version` input
+- [ ] The workflow generates release notes using `git-cliff` from commits since the previous tag
+- [ ] The workflow creates and pushes a git tag matching the provided version input
+- [ ] The workflow publishes a GitHub Release using the `gh` CLI or `softprops/action-gh-release`, with the git-cliff output as the release body
+- [ ] A `cliff.toml` file exists at the repository root and configures conventional commit grouping (feat → Features, fix → Bug Fixes, etc.)
+- [ ] No `CHANGELOG.md` is committed to the repository
+- [ ] The workflow can be triggered manually from the GitHub Actions UI with a version string input
+- [ ] The generated release notes correctly group commits by type and exclude non-user-facing types (chore, ci, style)
+
 ## Non-Functional Requirements
 
 <!-- NFR entries go here -->

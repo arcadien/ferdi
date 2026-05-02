@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., 0.1.0)"
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Install git-cliff
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/orhun/git-cliff/releases/download/v0.11.2/git-cliff-v0.11.2-x86_64-unknown-linux-gnu.tar.gz | tar xzf -
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Generate release notes
+        id: release-notes
+        run: |
+          git-cliff --config cliff.toml --tag v${{ github.event.inputs.version }} > release_notes.md
+          echo "notes=$(cat release_notes.md)" >> $GITHUB_OUTPUT
+
+      - name: Create and push git tag
+        run: |
+          git tag v${{ github.event.inputs.version }}
+          git push origin v${{ github.event.inputs.version }}
+
+      - name: Publish GitHub Release
+        run: |
+          gh release create v${{ github.event.inputs.version }} --notes-file release_notes.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -16,4 +16,5 @@ dev = [
     "pytest",
     "httpx",
     "pyyaml",
+    "pre-commit",
 ]

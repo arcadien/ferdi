@@ -26,17 +26,25 @@ Before starting, read `requirements.md` and check the status of `<REQ-ID>`:
 > - Test names must reference the requirement ID (e.g. `test_brq001_description`).
 > - Tests must fail with the current codebase. Do not write any implementation code.
 > - Update `**Status:**` to `In Progress` in `requirements.md` and the linked SPEC in `technical-specifications.md`.
-> - Return the list of test names written and the files modified.
+> - Return the list of test names written and the **exact file paths** of all files modified.
 
 **Then delegate to the test-runner agent:**
 
 > Run the test suite. Report the execution result.
 > We expect the new tests to FAIL (RED). If any new test passes, flag it explicitly.
 
-Relay both agents' summaries to the user.
+If any new test passes unexpectedly, delegate back to requirements-analyst to fix the test so it is properly RED before continuing.
+
+**Once tests are confirmed RED, delegate to the git-manager agent:**
+
+> Stage and commit the test files for `<REQ-ID>`.
+> - Stage only the test file(s) returned by the requirements-analyst (do NOT stage `requirements.md` or `technical-specifications.md`)
+> - Commit message: `test(<id>): write acceptance tests` (use requirement ID in lowercase as scope, e.g. `trq-003`)
+
+Relay both agents' summaries and the git commit to the user.
 
 **STOP. Ask the user:**
-> Tests are written. Are they RED as expected? Confirm to proceed to implementation, or describe what needs to be fixed.
+> Tests are written and committed. Proceed to implementation?
 
 Wait for explicit user confirmation before continuing.
 
@@ -48,18 +56,24 @@ Wait for explicit user confirmation before continuing.
 
 > Implement the minimum code to make the failing tests for `<REQ-ID>` pass.
 > Do not add behaviour beyond what the tests require.
-> Return the list of files created or modified.
+> Return the **exact file paths** of all files created or modified (excluding `requirements.md` and `technical-specifications.md`).
 
 **Then delegate to the test-runner agent:**
 
 > Run the **full test suite**. Report the complete execution result.
 > We need ALL tests to pass (GREEN), including pre-existing ones.
 
-Relay both agents' summaries to the user.
-
 If any test is still RED: delegate back to requirements-analyst to fix, then re-run test-runner. Repeat until GREEN.
 
-Once GREEN, **STOP. Ask the user:**
+**Once all tests are GREEN, delegate to the git-manager agent:**
+
+> Stage and commit the implementation files for `<REQ-ID>`.
+> - Stage only the implementation file(s) returned by the requirements-analyst (do NOT stage test files, `requirements.md`, or `technical-specifications.md`)
+> - Commit message: `feat(<id>): implement <title>` (use requirement ID in lowercase as scope)
+
+Relay both agents' summaries and the git commit to the user.
+
+**STOP. Ask the user:**
 > All tests are GREEN. Do you want to run a refactor phase? (yes / no)
 
 Wait for the user's answer.
@@ -74,15 +88,21 @@ Only execute if the user answered **yes**.
 
 > Refactor the code produced for `<REQ-ID>`: improve readability, remove duplication, simplify logic.
 > Do not change observable behaviour. Do not modify test files.
-> Return a list of changes made.
+> Return the **exact file paths** of all files modified.
 
 **Then delegate to the test-runner agent:**
 
 > Run the full test suite. All tests must still be GREEN after refactor.
 
-Relay both agents' summaries to the user.
-
 If any test went RED: tell the user and delegate back to requirements-analyst to revert or fix.
+
+**Once GREEN after refactor, delegate to the git-manager agent:**
+
+> Stage and commit the refactored files for `<REQ-ID>`.
+> - Stage only the refactored implementation file(s) (do NOT stage test files, `requirements.md`, or `technical-specifications.md`)
+> - Commit message: `refactor(<id>): <brief description of what was improved>`
+
+Relay both agents' summaries and the git commit to the user.
 
 ---
 
@@ -95,4 +115,10 @@ If any test went RED: tell the user and delegate back to requirements-analyst to
 > - Otherwise: set `Implemented`
 > Do the same for the linked SPEC in `technical-specifications.md`.
 
-Report the final status to the user.
+**Then delegate to the git-manager agent:**
+
+> Stage and commit the final status update for `<REQ-ID>`.
+> - Stage `requirements.md` and `technical-specifications.md`
+> - Commit message: `req(<id>): mark implemented` or `req(<id>): mark refactored` depending on outcome
+
+Report the final status and commit to the user.
