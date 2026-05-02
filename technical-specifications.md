@@ -422,7 +422,7 @@ Acceptance criteria are verified through:
 
 - **Requirement:** TRQ-005
 - **Date:** 2026-05-02
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-02
 - **Requirement type:** technical
 

@@ -129,7 +129,7 @@ A `cliff.toml` configuration file must be added at the repository root to config
 ### TRQ-005 — STTProvider interface and StaticSTT implementation
 
 - **Date:** 2026-05-02
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-02
 - **Spec:** SPEC-005
 
