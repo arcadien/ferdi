@@ -74,9 +74,37 @@ The pre-commit hook is automatically installed when running `pre-commit install 
 - Refactor only happens after all tests are green; tests must stay green throughout.
 - `requirements.md` and `technical-specifications.md` must always be sufficient for another agent or developer to re-implement any feature from scratch.
 
+### TDD cycle
+
+**Phase 1 — Write failing tests (RED)**
+
+Delegate to **test-writer**. Delegate to **test-runner** to confirm all new tests fail. If any pass unexpectedly, delegate back to **test-writer** to fix before continuing. Commit test files via **git-manager**.
+
+**Phase 2 — Implement (GREEN)**
+
+Delegate to **implementer** (max 2 attempts). After each attempt, delegate to **test-runner**.
+- GREEN → commit implementation via **git-manager**, close the requirement.
+- RED after attempt 1 → delegate to **implementer** again (attempt 2).
+- RED after attempt 2 → **STOP**. The implementer returns an `ESCALATE` report. Surface it to the user: which tests still fail, what was tried, hypothesis. Wait for the user to amend the requirement, the test contract, or provide implementation hints before resuming.
+
+**Test file freeze:** once tests are confirmed RED, test files must not be modified during Phase 2 or Phase 3. The freeze lifts only if the orchestrator explicitly decides the test contract was wrong — in which case return to Phase 1 with updated inputs.
+
+**Phase 3 — Refactor (optional, user must request)**
+
+Delegate to **refactorer**. Delegate to **test-runner** to confirm still GREEN. If the refactorer returns an `ESCALATE` report (a change would require modifying tests), surface it to the user before proceeding. Commit via **git-manager**.
+
 ## Agent architecture
 
-Three specialized sub-agents handle all work. Commands orchestrate them.
+Six specialized sub-agents handle all work. The orchestrator (main Claude) coordinates them.
+
+| Agent | Model | Writes to |
+|-------|-------|-----------|
+| `requirements-analyst` | Haiku | `requirements.md`, `technical-specifications.md` |
+| `test-writer` | Haiku | `tests/` only |
+| `implementer` | Sonnet | production code only |
+| `refactorer` | Sonnet | production code only |
+| `test-runner` | Haiku | nothing (read + run only) |
+| `git-manager` | Haiku | git history only |
 
 ### requirements-analyst
 
@@ -84,10 +112,34 @@ Three specialized sub-agents handle all work. Commands orchestrate them.
 
 Responsibilities:
 - Write and update `requirements.md` and `technical-specifications.md`
-- Write test code (Phase 1 of TDD)
-- Write implementation code (Phase 2 of TDD)
-- Refactor code (Phase 3 of TDD)
 - Update requirement and spec statuses
+
+### test-writer
+
+**Tools:** Read, Write, Edit — no shell execution.
+
+Responsibilities:
+- Read a requirement and its linked spec
+- Write one failing test per acceptance criterion in `tests/`
+- Never touch implementation files
+
+### implementer
+
+**Tools:** Read, Write, Edit — no shell execution.
+
+Responsibilities:
+- Write minimum production code to make specified failing tests pass
+- Never modify test files
+- 2-attempt budget; on exhaustion returns an `ESCALATE` report to the orchestrator
+
+### refactorer
+
+**Tools:** Read, Write, Edit — no shell execution.
+
+Responsibilities:
+- Improve production code readability and structure without changing observable behaviour
+- Never modify test files
+- Returns an `ESCALATE` report if a refactor would require changing a test
 
 ### test-runner
 
@@ -147,8 +199,11 @@ ferdi/
 ├── CLAUDE.md                    # This file
 └── .claude/
     ├── agents/
-    │   ├── requirements-analyst.md   # Reads/writes files, writes code
-    │   └── test-runner.md            # Runs tests, reports RED/GREEN
+    │   ├── requirements-analyst.md   # Writes requirements.md and technical-specifications.md
+    │   ├── test-writer.md            # Writes failing tests from specs (Haiku)
+    │   ├── implementer.md            # Implements code to pass tests (Sonnet)
+    │   ├── refactorer.md             # Refactors passing code (Sonnet)
+    │   └── test-runner.md            # Runs tests, reports RED/GREEN (Haiku)
     └── commands/
         ├── document.md
         ├── validate.md
