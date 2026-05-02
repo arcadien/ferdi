@@ -422,7 +422,8 @@ Acceptance criteria are verified through:
 
 - **Requirement:** TRQ-005
 - **Date:** 2026-05-02
-- **Status:** Draft
+- **Status:** Validated
+- **Validated:** 2026-05-02
 - **Requirement type:** technical
 
 ### Overview
@@ -539,7 +540,8 @@ Each acceptance criterion maps to a pytest test in `tests/test_stt_provider.py`:
 
 - **Requirement:** TRQ-006
 - **Date:** 2026-05-02
-- **Status:** Draft
+- **Status:** Validated
+- **Validated:** 2026-05-02
 - **Requirement type:** technical
 
 ### Overview
@@ -628,7 +630,8 @@ Each acceptance criterion maps to a pytest test in `tests/test_whisper_stt.py`:
 
 - **Requirement:** TRQ-007
 - **Date:** 2026-05-02
-- **Status:** Draft
+- **Status:** Validated
+- **Validated:** 2026-05-02
 - **Requirement type:** technical
 
 ### Overview

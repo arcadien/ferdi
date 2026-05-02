@@ -129,7 +129,8 @@ A `cliff.toml` configuration file must be added at the repository root to config
 ### TRQ-005 — STTProvider interface and StaticSTT implementation
 
 - **Date:** 2026-05-02
-- **Status:** Draft
+- **Status:** Validated
+- **Validated:** 2026-05-02
 - **Spec:** SPEC-005
 
 **Technical constraint:**
@@ -148,7 +149,8 @@ Define an abstract `STTProvider` interface and a `StaticSTT` concrete implementa
 ### TRQ-006 — WhisperSTT implementation
 
 - **Date:** 2026-05-02
-- **Status:** Draft
+- **Status:** Validated
+- **Validated:** 2026-05-02
 - **Spec:** SPEC-006
 
 **Technical constraint:**
@@ -167,7 +169,8 @@ A concrete `STTProvider` implementation that records audio from the microphone a
 ### TRQ-007 — WebAPISTT implementation
 
 - **Date:** 2026-05-02
-- **Status:** Draft
+- **Status:** Validated
+- **Validated:** 2026-05-02
 - **Spec:** SPEC-007
 
 **Technical constraint:**
