@@ -630,7 +630,7 @@ Each acceptance criterion maps to a pytest test in `tests/test_whisper_stt.py`:
 
 - **Requirement:** TRQ-007
 - **Date:** 2026-05-02
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-02
 - **Requirement type:** technical
 

@@ -169,7 +169,7 @@ A concrete `STTProvider` implementation that records audio from the microphone a
 ### TRQ-007 — WebAPISTT implementation
 
 - **Date:** 2026-05-02
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-02
 - **Spec:** SPEC-007
 
