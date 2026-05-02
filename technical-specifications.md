@@ -418,7 +418,7 @@ Acceptance criteria are verified through:
 
 ---
 
-## SPEC-005 — Pluggable STT Provider Interface (TRQ-005)
+## SPEC-005 — STTProvider interface and StaticSTT implementation (TRQ-005)
 
 - **Requirement:** TRQ-005
 - **Date:** 2026-05-02
@@ -427,7 +427,7 @@ Acceptance criteria are verified through:
 
 ### Overview
 
-The ferdi action engine must be decoupled from any concrete speech-to-text mechanism. This is achieved by defining an abstract `STTProvider` interface that all provider implementations must satisfy. A factory function (or equivalent configuration entry point) is responsible for selecting and instantiating the correct provider at startup based on an environment variable or config file. The engine depends solely on the interface, making it trivially testable and extensible.
+The ferdi action engine must be decoupled from any concrete speech-to-text mechanism. This is achieved by defining an abstract `STTProvider` interface that all provider implementations must satisfy. A `StaticSTT` concrete implementation provides a deterministic, side-effect-free provider that returns a fixed string — used for automated tests, CI pipelines, and debug sessions. A factory function reads configuration at startup and injects the correct provider into the engine.
 
 ### Architecture
 
@@ -452,21 +452,19 @@ Configuration (env var / config file)
 │  provider.listen() → str                        │
 │  → processing pipeline                          │
 └─────────────────────────────────────────────────┘
-        ▲               ▲               ▲
-        │               │               │
-┌───────────┐  ┌────────────┐  ┌────────────────┐
-│WhisperSTT │  │WebAPISTT   │  │StaticSTT       │
-│(mic + fw) │  │(HTTP endpt)│  │(fixed string)  │
-└───────────┘  └────────────┘  └────────────────┘
+        ▲
+        │
+┌────────────────┐
+│StaticSTT       │
+│(fixed string)  │
+└────────────────┘
 ```
 
 **Components:**
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| `STTProvider` | `ferdi/stt/base.py` | Abstract base class defining the interface |
-| `WhisperSTT` | `ferdi/stt/whisper_stt.py` | Microphone recording + faster-whisper transcription |
-| `WebAPISTT` | `ferdi/stt/webapi_stt.py` | HTTP endpoint receiving text from external clients |
+| `STTProvider` | `ferdi/stt/base.py` | Abstract base class / protocol defining the interface |
 | `StaticSTT` | `ferdi/stt/static_stt.py` | Returns a fixed configured string; no audio |
 | `build_stt_provider()` | `ferdi/stt/factory.py` | Reads configuration and returns the correct provider |
 
@@ -485,20 +483,11 @@ class STTProvider(ABC):
 
 All concrete implementations must subclass `STTProvider` and implement `listen() -> str`.
 
-### Provider Specifications
+### Provider Specification — `StaticSTT`
 
-**`StaticSTT`**
 - Constructor: `StaticSTT(text: str)`
 - `listen()` always returns the string passed at construction
 - No audio device, network, or filesystem access
-
-**`WhisperSTT`**
-- Constructor: `WhisperSTT(model: str = "base")`
-- `listen()` records from the default microphone until silence is detected, then runs faster-whisper transcription and returns the result
-
-**`WebAPISTT`**
-- Constructor: `WebAPISTT(host: str = "127.0.0.1", port: int = 8000)`
-- `listen()` blocks until a POST request is received on the `/command` endpoint and returns the `command` field from the request body
 
 ### Configuration Entry Point
 
@@ -507,8 +496,8 @@ The factory function reads `STT_PROVIDER` from the environment (or a config file
 | `STT_PROVIDER` value | Provider instantiated |
 |----------------------|-----------------------|
 | `static` | `StaticSTT` with text from `STT_STATIC_TEXT` env var |
-| `whisper` | `WhisperSTT` with model from `WHISPER_MODEL` env var (default: `base`) |
-| `webapi` | `WebAPISTT` with host/port from env vars |
+| `whisper` | `WhisperSTT` (see SPEC-006) |
+| `webapi` | `WebAPISTT` (see SPEC-007) |
 
 Unknown values raise a `ValueError` with a descriptive message.
 
@@ -517,11 +506,9 @@ Unknown values raise a `ValueError` with a descriptive message.
 1. Create `ferdi/stt/` package with `__init__.py`.
 2. Create `ferdi/stt/base.py`: define `STTProvider` abstract base class with `listen() -> str`.
 3. Create `ferdi/stt/static_stt.py`: implement `StaticSTT(text: str)`.
-4. Create `ferdi/stt/whisper_stt.py`: implement `WhisperSTT` (stub or full, depending on faster-whisper availability).
-5. Create `ferdi/stt/webapi_stt.py`: implement `WebAPISTT`.
-6. Create `ferdi/stt/factory.py`: implement `build_stt_provider()` reading from environment.
-7. Update the action engine (or `ferdi/main.py`) to accept an `STTProvider` instance via dependency injection rather than importing any concrete class.
-8. Write tests covering all acceptance criteria.
+4. Create `ferdi/stt/factory.py`: implement `build_stt_provider()` reading `STT_PROVIDER` from environment; support `static` for now, delegate `whisper` and `webapi` to future specs.
+5. Update the action engine (or `ferdi/main.py`) to accept an `STTProvider` instance via dependency injection rather than importing any concrete class.
+6. Write tests covering all acceptance criteria.
 
 ### Files to Create or Modify
 
@@ -530,19 +517,215 @@ Unknown values raise a `ValueError` with a descriptive message.
 | `ferdi/stt/__init__.py` | Create | Package marker |
 | `ferdi/stt/base.py` | Create | `STTProvider` abstract interface |
 | `ferdi/stt/static_stt.py` | Create | `StaticSTT` implementation |
-| `ferdi/stt/whisper_stt.py` | Create | `WhisperSTT` implementation |
-| `ferdi/stt/webapi_stt.py` | Create | `WebAPISTT` implementation |
 | `ferdi/stt/factory.py` | Create | `build_stt_provider()` factory |
 | `ferdi/main.py` | Modify | Inject `STTProvider` via dependency injection |
-| `tests/test_stt.py` | Create | Acceptance tests for TRQ-005 |
+| `tests/test_stt_provider.py` | Create | Acceptance tests for TRQ-005 |
 
 ### Testing
 
-Each acceptance criterion maps to a pytest test in `tests/test_stt.py`:
+Each acceptance criterion maps to a pytest test in `tests/test_stt_provider.py`:
 
 | Criterion | Test name | Validation method |
 |-----------|-----------|-------------------|
-| Engine imports only the interface | `test_trq005_engine_does_not_import_concrete_stt` | Inspect `ferdi/main.py` imports; assert no concrete STT class is imported |
-| Active provider selectable via config | `test_trq005_factory_selects_provider_from_env` | Set `STT_PROVIDER=static`, call `build_stt_provider()`, assert returns `StaticSTT` |
+| `STTProvider` protocol/interface is defined | `test_trq005_stt_provider_interface_exists` | Import `STTProvider` from `ferdi.stt.base`; assert it is an abstract class with a `listen` method |
+| `StaticSTT` implements `STTProvider` | `test_trq005_static_stt_implements_provider` | Assert `isinstance(StaticSTT("hi"), STTProvider)` and `StaticSTT("hi").listen() == "hi"` |
+| Engine imports only the interface | `test_trq005_engine_does_not_import_concrete_stt` | Inspect `ferdi/main.py` source; assert no concrete STT class name appears in imports |
+| Active provider selectable via config | `test_trq005_factory_selects_static_provider_from_env` | Set `STT_PROVIDER=static` and `STT_STATIC_TEXT=test`, call `build_stt_provider()`, assert returns a `StaticSTT` instance |
 | `StaticSTT` triggers same pipeline | `test_trq005_static_stt_triggers_processing_pipeline` | Inject `StaticSTT("raise shields")` into the engine and assert the command reaches the processing pipeline |
-| New provider requires no engine change | `test_trq005_new_provider_requires_only_factory_change` | Subclass `STTProvider` in the test; inject into engine; assert it is called without modifying engine code |
+
+---
+
+## SPEC-006 — WhisperSTT implementation (TRQ-006)
+
+- **Requirement:** TRQ-006
+- **Date:** 2026-05-02
+- **Status:** Draft
+- **Requirement type:** technical
+
+### Overview
+
+`WhisperSTT` is a concrete `STTProvider` that records audio from the system microphone and transcribes it locally using the `faster-whisper` library. It runs entirely offline on Windows, requires no cloud API key, and integrates into the ferdi pipeline by returning a transcribed string to the action engine.
+
+### Architecture
+
+```
+Microphone (default audio device)
+        │
+        │  raw audio frames (pyaudio / sounddevice)
+        │
+        ▼
+┌─────────────────────────────┐
+│  WhisperSTT.listen()        │
+│  - record until VAD or      │
+│    fixed duration elapses   │
+│  - run faster-whisper       │
+│    transcription            │
+│  - return text string       │
+└─────────────────────────────┘
+        │
+        ▼
+Action Engine (STTProvider interface)
+```
+
+**Components:**
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `WhisperSTT` | `ferdi/stt/whisper_stt.py` | Microphone recording + faster-whisper transcription |
+| `faster-whisper` | PyPI dependency | Local Whisper model inference |
+| `pyaudio` or `sounddevice` | PyPI dependency | Microphone audio capture |
+
+### Provider Specification — `WhisperSTT`
+
+- Constructor: `WhisperSTT(model: str = "base", initial_prompt: str | None = None, record_seconds: float = 5.0)`
+- `model` selects the faster-whisper model size: `tiny`, `base`, `small`, or `medium`
+- `initial_prompt` is an optional string passed to the faster-whisper `transcribe()` call to bias the model toward Star Citizen vocabulary (ship names, commands, etc.)
+- `record_seconds` sets the maximum recording window; VAD may stop recording earlier if silence is detected
+- `listen()` records audio, transcribes it, and returns the result string
+
+### Configuration via Factory
+
+When `STT_PROVIDER=whisper`, `build_stt_provider()` (SPEC-005) reads:
+
+| Env var | Default | Purpose |
+|---------|---------|---------|
+| `WHISPER_MODEL` | `base` | Model size passed to `WhisperSTT` |
+| `WHISPER_INITIAL_PROMPT` | _(none)_ | Optional transcription bias prompt |
+| `WHISPER_RECORD_SECONDS` | `5.0` | Maximum recording window in seconds |
+
+### Implementation Plan
+
+1. Add `faster-whisper` and an audio capture library (`sounddevice` or `pyaudio`) to `pyproject.toml` dependencies.
+2. Create `ferdi/stt/whisper_stt.py`: implement `WhisperSTT` subclassing `STTProvider`.
+3. Implement `listen()`: capture audio for up to `record_seconds`, save to a temporary WAV file or in-memory buffer, run `faster_whisper.WhisperModel.transcribe()`, return the joined text segments.
+4. Update `build_stt_provider()` in `ferdi/stt/factory.py` to handle `STT_PROVIDER=whisper`.
+5. Write tests covering all acceptance criteria (use a pre-recorded WAV fixture to avoid hardware dependency in CI).
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `ferdi/stt/whisper_stt.py` | Create | `WhisperSTT` implementation |
+| `ferdi/stt/factory.py` | Modify | Add `whisper` case to `build_stt_provider()` |
+| `pyproject.toml` | Modify | Add `faster-whisper` and audio capture dependency |
+| `tests/test_whisper_stt.py` | Create | Acceptance tests for TRQ-006 |
+
+### Testing
+
+Each acceptance criterion maps to a pytest test in `tests/test_whisper_stt.py`:
+
+| Criterion | Test name | Validation method |
+|-----------|-----------|-------------------|
+| `WhisperSTT` implements `STTProvider` | `test_trq006_whisper_stt_implements_provider` | Assert `issubclass(WhisperSTT, STTProvider)` |
+| Model name is configurable | `test_trq006_whisper_stt_model_configurable` | Instantiate `WhisperSTT(model="tiny")` and assert the stored model name equals `"tiny"` |
+| `initial_prompt` is configurable | `test_trq006_whisper_stt_initial_prompt_configurable` | Instantiate with `initial_prompt="Star Citizen"` and assert it is stored |
+| Recording boundary is configurable | `test_trq006_whisper_stt_record_seconds_configurable` | Instantiate with `record_seconds=3.0` and assert the stored value equals `3.0` |
+| End-to-end transcription | `test_trq006_whisper_stt_end_to_end` | Feed a pre-recorded WAV fixture through `WhisperSTT.listen()` (mock mic input) and assert non-empty string returned |
+
+---
+
+## SPEC-007 — WebAPISTT implementation (TRQ-007)
+
+- **Requirement:** TRQ-007
+- **Date:** 2026-05-02
+- **Status:** Draft
+- **Requirement type:** technical
+
+### Overview
+
+`WebAPISTT` is a concrete `STTProvider` that exposes an HTTP POST endpoint. External clients such as VoiceAttack POST transcribed text to this endpoint, which passes the text directly into the ferdi action engine. The provider replaces the previous `POST /command` endpoint from TRQ-001 for STT-driven input, using a dedicated `/stt` route and returning the action engine result in the response body.
+
+### Architecture
+
+```
+External client (e.g. VoiceAttack HTTP plugin)
+        │
+        │  POST http://127.0.0.1:<port>/stt
+        │  Content-Type: application/json
+        │  Body: {"text": "land at Port Olisar"}
+        │
+        ▼
+┌─────────────────────────────────┐
+│  WebAPISTT  (FastAPI sub-app    │
+│  or mounted router)             │
+│                                 │
+│  POST /stt                      │
+│  → extract "text" field         │
+│  → pass to action engine        │
+│  → return 200 + engine result   │
+└─────────────────────────────────┘
+        │
+        ▼
+Action Engine (STTProvider interface)
+```
+
+**Components:**
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `WebAPISTT` | `ferdi/stt/webapi_stt.py` | HTTP endpoint + action engine bridge |
+| FastAPI router | internal | Defines `POST /stt` route |
+
+### Provider Specification — `WebAPISTT`
+
+- Constructor: `WebAPISTT(port: int = 8000)`
+- `port` is the TCP port the HTTP server listens on
+- `listen()` blocks until a POST request is received on `/stt` and returns the `text` field from the request body
+- The endpoint returns HTTP 200 with the action engine result as the response body
+- A 422 response is returned when the request body is missing the `text` field
+
+### Request and Response Contract
+
+**Request — POST /stt**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `text` | `string` | yes | Transcribed voice command text |
+
+**Response — HTTP 200**
+
+```json
+{
+  "status": "ok",
+  "result": "<action engine output>"
+}
+```
+
+**Error responses**
+
+| Status | Trigger |
+|--------|---------|
+| 422 Unprocessable Entity | Missing or malformed JSON body |
+
+### Configuration via Factory
+
+When `STT_PROVIDER=webapi`, `build_stt_provider()` (SPEC-005) reads:
+
+| Env var | Default | Purpose |
+|---------|---------|---------|
+| `WEBAPI_STT_PORT` | `8000` | TCP port for the HTTP server |
+
+### Implementation Plan
+
+1. Create `ferdi/stt/webapi_stt.py`: implement `WebAPISTT` subclassing `STTProvider`. Define a FastAPI router with `POST /stt`. The `listen()` method starts the server (or registers a handler) and returns received text.
+2. Update `build_stt_provider()` in `ferdi/stt/factory.py` to handle `STT_PROVIDER=webapi`.
+3. Write tests using FastAPI `TestClient` to cover all acceptance criteria without requiring a live HTTP server.
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `ferdi/stt/webapi_stt.py` | Create | `WebAPISTT` implementation |
+| `ferdi/stt/factory.py` | Modify | Add `webapi` case to `build_stt_provider()` |
+| `tests/test_webapi_stt.py` | Create | Acceptance tests for TRQ-007 |
+
+### Testing
+
+Each acceptance criterion maps to a pytest test in `tests/test_webapi_stt.py`:
+
+| Criterion | Test name | Validation method |
+|-----------|-----------|-------------------|
+| `WebAPISTT` implements `STTProvider` | `test_trq007_webapi_stt_implements_provider` | Assert `issubclass(WebAPISTT, STTProvider)` |
+| `POST /stt` accepts `{"text": "..."}` | `test_trq007_post_stt_accepts_text_body` | `TestClient.post("/stt", json={"text": "raise shields"})` → assert status 200 |
+| Endpoint returns action engine result | `test_trq007_post_stt_returns_engine_result` | Assert response JSON contains `"status": "ok"` and a `"result"` key |
+| Port is configurable | `test_trq007_webapi_stt_port_configurable` | Instantiate `WebAPISTT(port=9000)` and assert stored port equals `9000` |

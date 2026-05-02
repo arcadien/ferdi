@@ -126,7 +126,7 @@ A `cliff.toml` configuration file must be added at the repository root to config
 - [ ] The workflow can be triggered manually from the GitHub Actions UI with a version string input
 - [ ] The generated release notes correctly group commits by type and exclude non-user-facing types (chore, ci, style)
 
-### TRQ-005 — Pluggable STT Provider Interface
+### TRQ-005 — STTProvider interface and StaticSTT implementation
 
 - **Date:** 2026-05-02
 - **Status:** Draft
@@ -136,18 +136,51 @@ A `cliff.toml` configuration file must be added at the repository root to config
 The action engine must not be coupled to any specific speech-to-text mechanism. Different deployment contexts (production, testing, debugging, external clients) require different input sources. The engine must operate identically regardless of how the text arrives.
 
 **Description:**
-The action engine receives text through an abstract `STTProvider` interface. Three concrete implementations must be provided:
-- `WhisperSTT` — handles microphone recording and transcription using faster-whisper locally
-- `WebAPISTT` — exposes an HTTP endpoint that receives text (from VoiceAttack or any external client)
-- `StaticSTT` — returns a fixed configured string without audio (for automated tests and debug)
-
-The active provider is selected via configuration (environment variable or config file). The engine imports and depends only on the interface, never on a concrete implementation.
+Define an abstract `STTProvider` interface and a `StaticSTT` concrete implementation that returns a fixed configured string without audio. This is the foundation that all other STT providers build on.
 
 **Acceptance criteria:**
-- [ ] The action engine imports only the `STTProvider` interface, never a concrete implementation
-- [ ] The active provider is selectable via configuration (environment variable or config file) without modifying engine code
+- [ ] A `STTProvider` protocol/interface is defined
+- [ ] `StaticSTT(text)` implements `STTProvider` and returns the configured text as the transcription
+- [ ] The action engine imports only `STTProvider`, never a concrete implementation
+- [ ] The active provider is selectable via configuration (e.g. environment variable or config file)
 - [ ] `StaticSTT("raise shields")` triggers the same processing pipeline as a real voice command
-- [ ] Adding a new provider requires modifying only the configuration entry point, not the engine
+
+### TRQ-006 — WhisperSTT implementation
+
+- **Date:** 2026-05-02
+- **Status:** Draft
+- **Spec:** SPEC-006
+
+**Technical constraint:**
+Local speech-to-text transcription must work offline on a Windows PC without relying on cloud APIs.
+
+**Description:**
+A concrete `STTProvider` implementation that records audio from the microphone and transcribes it locally using faster-whisper.
+
+**Acceptance criteria:**
+- [ ] `WhisperSTT` implements `STTProvider`
+- [ ] Model name is configurable (tiny, base, small, medium)
+- [ ] An optional `initial_prompt` can be set via configuration to bias transcription toward Star Citizen vocabulary
+- [ ] Recording duration or voice-activity detection boundary is configurable
+- [ ] The provider works end-to-end: microphone input produces a transcribed string passed to the action engine
+
+### TRQ-007 — WebAPISTT implementation
+
+- **Date:** 2026-05-02
+- **Status:** Draft
+- **Spec:** SPEC-007
+
+**Technical constraint:**
+VoiceAttack and other external clients communicate with ferdi over HTTP. An STT provider that acts as an HTTP receiver enables these clients to inject text directly into the action engine.
+
+**Description:**
+A concrete `STTProvider` implementation that exposes an HTTP endpoint. External clients (e.g. VoiceAttack) POST text to this endpoint, which feeds it into the action engine.
+
+**Acceptance criteria:**
+- [ ] `WebAPISTT` implements `STTProvider`
+- [ ] A POST `/stt` endpoint accepts a JSON body `{"text": "..."}` and passes the text to the action engine
+- [ ] The endpoint returns a 200 response with the action engine result
+- [ ] The port is configurable
 
 ## Non-Functional Requirements
 
