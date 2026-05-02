@@ -94,3 +94,86 @@ Each acceptance criterion maps to a pytest test in `tests/test_main.py`:
 | Response body contains `status` and `received` | `test_trq001_response_body_structure` | Assert `response.json() == {"status": "ok", "received": "test"}` |
 | Missing body returns 422 | `test_trq001_missing_body_returns_422` | `TestClient.post("/command")` with no body → assert status 422 |
 | Malformed body (missing `command` field) returns 422 | `test_trq001_malformed_body_returns_422` | `TestClient.post("/command", json={"foo": "bar"})` → assert status 422 |
+
+---
+
+## SPEC-002 — GitHub Actions CI (TRQ-002)
+
+- **Requirement:** TRQ-002
+- **Date:** 2026-05-02
+- **Status:** Implemented
+- **Requirement type:** technical
+
+### Overview
+
+GitHub Actions provides a CI/CD platform integrated directly into GitHub repositories. For ferdi, a workflow automates the execution of the pytest test suite on every code change (push or pull request). This ensures that all commits maintain test coverage and prevents regressions from being merged. The workflow is lightweight, declarative, and requires no external CI infrastructure.
+
+### Architecture
+
+```
+Developer pushes code to GitHub
+        │
+        ▼
+GitHub detects push or pull_request event
+        │
+        ▼
+Workflow trigger: .github/workflows/ci.yml
+        │
+        ├─ Set up ubuntu-latest runner
+        ├─ Install Python 3.11
+        ├─ Install dependencies: pip install -e ".[dev]"
+        │
+        ▼
+pytest tests/ -v
+        │
+        ├─ If all tests pass → green check (✓)
+        │
+        └─ If any test fails → red check (✗)
+        │
+        ▼
+Pull request checks / commit status updated
+```
+
+**Components:**
+- `.github/workflows/ci.yml` — GitHub Actions workflow definition (YAML)
+- `ubuntu-latest` runner — Linux environment with Python runtime
+- `actions/setup-python@v5` — GitHub action to install specified Python version
+- `pytest tests/ -v` — command to execute the full test suite
+
+### Implementation Plan
+
+1. Create directory `.github/workflows/` if it does not exist.
+2. Create `.github/workflows/ci.yml` with the following structure:
+   - **Name:** "CI"
+   - **Trigger:** `on: [push, pull_request]`
+   - **Jobs:** Single job named `test`
+   - **Runs on:** `ubuntu-latest`
+   - **Steps:**
+     1. Check out code: `actions/checkout@v4`
+     2. Set up Python 3.11: `actions/setup-python@v5` with `python-version: '3.11'`
+     3. Install dependencies: `pip install -e ".[dev]"`
+     4. Run tests: `pytest tests/ -v`
+3. Verify workflow syntax and that the workflow executes successfully on the current codebase.
+4. Confirm that workflow runs appear in pull request status checks and commit history.
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `.github/workflows/ci.yml` | Create | GitHub Actions workflow definition for CI |
+
+### Testing
+
+Workflow validation is verified by:
+
+1. **Workflow syntax check** — The YAML file must be valid GitHub Actions syntax (GitHub will reject invalid files automatically).
+2. **Successful execution on current codebase** — The workflow must complete with exit code 0 (all tests pass).
+3. **Visibility in GitHub UI** — On a test pull request or commit push, workflow status must appear in:
+   - Commit status checks
+   - Pull request "Checks" tab
+4. **Test command execution** — `pytest tests/ -v` must run and report results with verbose output.
+
+The workflow itself is not unit-tested; its correctness is verified by observing:
+- Successful runs on new commits
+- Proper detection of test failures (workflow should fail if any test fails)
+- Correct Python version and dependency installation from pyproject.toml

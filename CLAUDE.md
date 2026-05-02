@@ -30,6 +30,7 @@ Vocal agent for Star Citizen: VoiceAttack → FastAPI → Claude Vision → pydi
 
 ### Rules
 
+- **Requirements are discussed with the user in conversation before any files are written.** The `/document` command is only called once the user has agreed on the requirement content.
 - **No code is written before a requirement reaches `Validated` status.**
 - The user must explicitly run `/validate` to approve a requirement.
 - Tests are written before implementation (TDD). Tests must be RED before implementation starts.
