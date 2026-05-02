@@ -1,0 +1,18 @@
+[changelog]
+# Changelog generation configuration for git-cliff
+global_prefix = ""
+commit_parsers = [
+    { message = "^feat", group = "Features" },
+    { message = "^fix", group = "Bug Fixes" },
+    { message = "^doc", group = "Documentation" },
+    { message = "^perf", group = "Performance" },
+    { message = "^refactor", group = "Refactoring" },
+    { message = "^test", group = "Testing" },
+    { message = "^chore|^ci|^style", skip = true },
+]
+skip_unknown = true
+sort_commits = "newest"
+
+[git]
+# Skip commits that contain specific keywords
+skip_footers = []

@@ -44,9 +44,10 @@ class TestReleaseWorkflowFile:
         with open(workflow_path, "r", encoding="utf-8") as f:
             workflow = yaml.safe_load(f)
 
-        assert "on" in workflow, "Workflow must have an 'on' trigger definition"
+        on_triggers = workflow.get("on") or workflow.get(True)
+        assert on_triggers is not None, "Workflow must have an 'on' trigger definition"
         assert (
-            "workflow_dispatch" in workflow["on"]
+            "workflow_dispatch" in on_triggers
         ), "Workflow must have workflow_dispatch trigger"
 
     def test_trq004_release_workflow_has_version_input(self):
@@ -61,10 +62,11 @@ class TestReleaseWorkflowFile:
         with open(workflow_path, "r", encoding="utf-8") as f:
             workflow = yaml.safe_load(f)
 
+        on_triggers = workflow.get("on") or workflow.get(True)
         assert (
-            "workflow_dispatch" in workflow["on"]
+            "workflow_dispatch" in on_triggers
         ), "workflow_dispatch trigger must exist"
-        dispatch_config = workflow["on"]["workflow_dispatch"]
+        dispatch_config = on_triggers["workflow_dispatch"]
         assert "inputs" in dispatch_config, "workflow_dispatch must have inputs"
         assert "version" in dispatch_config["inputs"], "version input must be defined"
         assert (
@@ -139,8 +141,9 @@ class TestReleaseWorkflowFile:
             workflow = yaml.safe_load(f)
 
         # workflow_dispatch enables manual triggering
+        on_triggers = workflow.get("on") or workflow.get(True)
         assert (
-            "on" in workflow and "workflow_dispatch" in workflow["on"]
+            on_triggers is not None and "workflow_dispatch" in on_triggers
         ), "workflow_dispatch trigger enables manual triggering from GitHub UI"
 
 
