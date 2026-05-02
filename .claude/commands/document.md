@@ -82,5 +82,11 @@ Delegate the entire task to the **requirements-analyst** agent with the followin
 > ### Testing
 > ```
 
-After the agent completes, relay its summary to the user and remind them:
+After the agent completes, delegate to the **git-manager** agent:
+
+> Stage and commit the new requirement.
+> - Stage `requirements.md` and `technical-specifications.md`
+> - Commit message: `req(<id>): document <title>` (use the requirement ID in lowercase as scope, e.g. `trq-003`)
+
+After git-manager confirms the commit, relay the requirements-analyst summary to the user and remind them:
 > Requirement is in **Draft** status. Review the entries in `requirements.md` and `technical-specifications.md`, then run `/validate <REQ-ID>` to approve it.

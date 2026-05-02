@@ -8,6 +8,42 @@ Vocal agent for Star Citizen: VoiceAttack → FastAPI → Claude Vision → pydi
 - `requirements.md` and `technical-specifications.md`: **English**
 - Conversation with the user: French or English, follow the user's language
 
+## Conventional Commits
+
+All commit messages **must** follow the [Conventional Commits](https://www.conventionalcommits.org/) format. This is enforced by the `conventional-pre-commit` hook.
+
+### Format
+
+```
+type(scope): description
+```
+
+### Allowed types
+
+- `feat`: A new feature or capability
+- `fix`: A bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, missing semicolons, etc.)
+- `refactor`: Code refactoring without feature/bug changes
+- `test`: Test additions or updates
+- `ci`: CI/CD configuration changes
+- `chore`: Build process, dependencies, tooling changes
+
+### Examples
+
+Valid commit messages:
+```
+feat(voice-commands): add support for StarCitizen navigation
+fix: resolve FastAPI startup timeout issue
+docs: update API endpoint documentation
+refactor(visionapi): simplify image preprocessing
+test: add acceptance tests for TRQ-003
+ci(github-actions): add commit message validation
+chore: update dependencies
+```
+
+The pre-commit hook is automatically installed when running `pre-commit install --hook-type commit-msg`. Commits that do not follow this format will be rejected.
+
 ## Development workflow
 
 ```
@@ -40,7 +76,7 @@ Vocal agent for Star Citizen: VoiceAttack → FastAPI → Claude Vision → pydi
 
 ## Agent architecture
 
-Two specialized sub-agents handle all work. Commands orchestrate them.
+Three specialized sub-agents handle all work. Commands orchestrate them.
 
 ### requirements-analyst
 
@@ -61,6 +97,15 @@ Responsibilities:
 - Discover and run the full test suite
 - Report RED / GREEN status with structured output
 - List each test with pass/fail and failure details
+
+### git-manager
+
+**Tools:** Bash, Read — no file writes outside git.
+
+Responsibilities:
+- Stage specific files and create conventional commits
+- Push branches and create PRs via `gh` CLI
+- Enforce the `req:` type rule: any commit touching `requirements.md` or `technical-specifications.md` must use `req` type
 
 ## Requirement types
 
