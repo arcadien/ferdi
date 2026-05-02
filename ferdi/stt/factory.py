@@ -13,7 +13,15 @@ def build_stt_provider() -> STTProvider:
         text = os.environ.get("STT_STATIC_TEXT", "")
         return StaticSTT(text)
 
+    if provider_name == "whisper":
+        from ferdi.stt.whisper_stt import WhisperSTT  # noqa: PLC0415
+
+        model = os.environ.get("WHISPER_MODEL", "base")
+        initial_prompt = os.environ.get("WHISPER_INITIAL_PROMPT") or None
+        record_seconds = float(os.environ.get("WHISPER_RECORD_SECONDS", "5.0"))
+        return WhisperSTT(model=model, initial_prompt=initial_prompt, record_seconds=record_seconds)
+
     raise ValueError(
         f"Unknown STT_PROVIDER value: {provider_name!r}. "
-        "Supported values: 'static'."
+        "Supported values: 'static', 'whisper'."
     )
