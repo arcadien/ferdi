@@ -101,7 +101,7 @@ Each acceptance criterion maps to a pytest test in `tests/test_main.py`:
 
 - **Requirement:** TRQ-002
 - **Date:** 2026-05-02
-- **Status:** Draft
+- **Status:** Implemented
 - **Requirement type:** technical
 
 ### Overview

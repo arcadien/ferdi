@@ -54,7 +54,8 @@ A FastAPI application must be created as the entry point for the ferdi system. I
 ### TRQ-002 — GitHub Actions CI
 
 - **Date:** 2026-05-02
-- **Status:** Draft
+- **Status:** Implemented
+- **Validated:** 2026-05-02
 - **Spec:** SPEC-002
 
 **Technical constraint:**
