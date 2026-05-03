@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+import screeninfo
+
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from ferdi.stt.base import STTProvider
@@ -21,3 +23,17 @@ class CommandRequest(BaseModel):
 @app.post("/command")
 def post_command(request: CommandRequest):
     return {"status": "ok", "received": request.command}
+
+
+@app.post("/detect-resolution")
+def detect_resolution():
+    monitors = screeninfo.get_monitors()
+    primary = next((m for m in monitors if m.is_primary), None)
+    if primary is None:
+        raise HTTPException(status_code=500, detail="No primary monitor found")
+    app.state.resolution = {"width": primary.width, "height": primary.height}
+    return {
+        "width": primary.width,
+        "height": primary.height,
+        "message": f"Resolution {primary.width} by {primary.height} detected",
+    }
