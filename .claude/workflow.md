@@ -47,7 +47,7 @@ All Python commands use **uv**:
 
 ```bash
 uv add <package>          # add a dependency
-uv sync --dev             # install all dependencies including dev
+uv sync --extra dev       # install all dependencies including dev extras
 uv run pytest tests/ -v   # run the test suite
 uv run python <script>    # run a script
 ```

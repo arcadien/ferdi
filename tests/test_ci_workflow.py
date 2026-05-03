@@ -128,11 +128,11 @@ def test_trq002_install_dev_dependencies(workflow_yaml):
     for job in jobs.values():
         for step in job.get("steps", []):
             run_cmd = step.get("run", "")
-            if "uv sync --dev" in run_cmd:
+            if "uv sync --extra dev" in run_cmd:
                 found = True
                 break
     assert found, (
-        "No step contains 'uv sync --dev'. "
+        "No step contains 'uv sync --extra dev'. "
         "Dependencies must be installed via uv."
     )
 
