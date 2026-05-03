@@ -50,8 +50,9 @@ A voice command ("detect resolution") is sent to the ferdi backend via HTTP. The
 ### BRQ-002 — Set a quantum route by voice
 
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
 - **Spec:** SPEC-009
 
 **User value:**
@@ -250,8 +251,9 @@ A FastAPI POST endpoint that detects the primary screen's resolution using a cro
 ### TRQ-009 — POST /quantum-route endpoint
 
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
 - **Spec:** SPEC-009
 
 **Technical constraint:**
@@ -274,8 +276,9 @@ A FastAPI POST endpoint that orchestrates the full quantum route flow. It accept
 ### TRQ-010 — Pluggable route validator interface
 
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
 - **Spec:** SPEC-009
 
 **Technical constraint:**
@@ -318,8 +321,9 @@ The screen resolution detection mechanism must use only cross-platform libraries
 ### NFR-002 — UI coordinates as screen percentage
 
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
 - **Spec:** SPEC-009
 
 **Non-functional requirement:**

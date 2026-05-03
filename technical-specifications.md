@@ -881,8 +881,9 @@ Each acceptance criterion maps to a pytest test in `tests/test_detect_resolution
 
 - **Requirements:** BRQ-002, TRQ-009, TRQ-010, NFR-002
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
 - **Requirement type:** business, technical, non-functional
 
 ### Overview
