@@ -16,8 +16,9 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install -y libportaudio2
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --extra dev
       - name: Validate conventional commits
+        if: github.event_name == 'push'
         run: |
           uv run python -c "
           import subprocess, re, sys

@@ -1,7 +1,7 @@
 ---
 name: git-manager
 description: Handles all git operations for the ferdi project. Stages specific files, creates conventional commits, pushes branches, and creates PRs. Enforces the req: type rule for requirements and specification files.
-model: claude-haiku-4-5-20251001
+model: haiku
 tools: Bash, Read
 ---
 
@@ -36,6 +36,15 @@ Any commit that includes `requirements.md` or `technical-specifications.md` **mu
 | TDD close | `requirements.md` + `technical-specifications.md` | `req(<id>): mark implemented` or `req(<id>): mark refactored` |
 
 Use the requirement ID in lowercase as the scope (e.g. `trq-003`, `brq-001`).
+
+## Branch protection
+
+**Never push to `main`.** If asked to push while on `main`:
+1. Create an appropriate feature branch: `git checkout -b feat/<req-id>-<short-description>` (or `fix/`, `chore/` as appropriate)
+2. Push with upstream tracking: `git push -u origin <branch-name>`
+3. Report the branch name and suggest running `gh pr create`
+
+Local commits on `main` are allowed. Only pushing is forbidden.
 
 ## Rules
 
