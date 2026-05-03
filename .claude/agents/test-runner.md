@@ -1,7 +1,7 @@
 ---
 name: test-runner
 description: Discovers and runs the project test suite, reports RED or GREEN status with structured execution summaries. Never writes or modifies source files.
-model: claude-haiku-4-5-20251001
+model: haiku
 tools: Bash, Read
 ---
 
@@ -20,10 +20,8 @@ If no test command is provided, discover it:
 Run the test suite with verbose output and capture all results:
 
 ```bash
-python -m pytest -v 2>&1
+uv run pytest -v 2>&1
 ```
-
-Or the project-specific test command.
 
 ## Output format
 

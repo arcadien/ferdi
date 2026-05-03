@@ -48,22 +48,36 @@ The pre-commit hook is automatically installed when running `pre-commit install 
 ## Development workflow
 
 ```
-/document <type> <description>
+User describes requirement in conversation
         │
         ▼
-   Status: Draft
-   (user reviews requirement and spec)
+   Status: Draft     ← requirements-analyst writes files, git-manager commits
+   (user reviews)
         │
-        ▼ /validate <REQ-ID>
-   Status: Validated
+        ▼ User approves
+   Status: Validated ← requirements-analyst updates status, git-manager commits
         │
-        ▼ /tdd <REQ-ID>   ← Phase 1: write tests → RED
-   Status: In Progress    ← Phase 2: implement   → GREEN (all tests)
-        │                 ← Phase 3: refactor     → GREEN (optional)
+        ▼ User asks to implement
+   Status: In Progress
+        │   Phase 1: test-writer → RED  → git-manager commits test files
+        │   Phase 2: implementer → GREEN → git-manager commits impl files
+        │   Phase 3: refactorer  → GREEN (optional)
         ▼
-   Status: Implemented
-      or Refactored
+   Status: Implemented or Refactored ← git-manager commits requirements.md + technical-specifications.md
 ```
+
+## Environment management
+
+All Python commands use **uv**:
+
+```bash
+uv add <package>          # add a dependency
+uv sync --dev             # install all dependencies including dev
+uv run pytest tests/ -v   # run the test suite
+uv run python <script>    # run a script
+```
+
+Never use `pip` or `python` directly.
 
 ### Rules
 
@@ -182,15 +196,6 @@ Each prefix has its own independent counter.
 | `Refactored` | All tests GREEN after a refactor pass |
 | `Cancelled` | Dropped |
 
-## Available custom commands
-
-| Command | Purpose |
-|---------|---------|
-| `/document <type> <description>` | Capture a typed requirement and write its technical specification |
-| `/validate <REQ-ID>` | Mark a requirement as validated by the user (required before TDD) |
-| `/tdd <REQ-ID>` | Run the full TDD cycle: write tests (RED) → implement (GREEN) → refactor (optional) |
-| `/update-status <REQ-ID> <status>` | Manually override status |
-
 ## Repository layout
 
 ```
@@ -199,16 +204,11 @@ ferdi/
 ├── technical-specifications.md  # Technical specs linked to requirements (SPEC-NNN)
 ├── CLAUDE.md                    # This file
 └── .claude/
-    ├── agents/
-    │   ├── requirements-analyst.md   # Writes requirements.md and technical-specifications.md
-    │   ├── test-writer.md            # Writes failing tests from specs (Haiku)
-    │   ├── implementer.md            # Implements code to pass tests (Sonnet)
-    │   ├── refactorer.md             # Refactors passing code (Sonnet)
-    │   ├── test-runner.md            # Runs tests, reports RED/GREEN (Haiku)
-    │   └── git-manager.md            # Handles git commits, pushes, PRs (Haiku)
-    └── commands/
-        ├── document.md
-        ├── validate.md
-        ├── tdd.md
-        └── update-status.md
+    └── agents/
+        ├── requirements-analyst.md   # Writes requirements.md and technical-specifications.md
+        ├── test-writer.md            # Writes failing tests from specs (Haiku)
+        ├── implementer.md            # Implements code to pass tests (Sonnet)
+        ├── refactorer.md             # Refactors passing code (Sonnet)
+        ├── test-runner.md            # Runs tests, reports RED/GREEN (Haiku)
+        └── git-manager.md            # Handles git commits, pushes, PRs (Haiku)
 ```
