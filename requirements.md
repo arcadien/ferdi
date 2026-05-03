@@ -26,7 +26,26 @@ Requirements are linked to technical specifications in `technical-specifications
 
 ## Business Requirements
 
-<!-- BRQ entries go here -->
+### BRQ-001 — Detect screen resolution
+
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Spec:** SPEC-008
+
+**User value:**
+The user can trigger a voice command to detect and store the primary screen resolution for the current game session. The detected resolution is returned to the client.
+
+**Description:**
+A voice command ("detect resolution") is sent to the ferdi backend via HTTP. The backend detects the primary screen's resolution using a cross-platform library, stores it for later use (e.g., by Claude Vision for screenshot analysis), and returns the detected dimensions to the client. The client (VoiceAttack or other frontend) uses this response to vocally confirm the resolution to the user.
+
+**Acceptance criteria:**
+- [ ] A POST /detect-resolution endpoint exists
+- [ ] The endpoint detects the primary monitor's resolution
+- [ ] The detected resolution is stored in application state for later use
+- [ ] The endpoint returns a 200 response with the detected resolution and a confirmation message
+- [ ] The response format allows the client to extract and vocally confirm the resolution
 
 ## Technical Requirements
 
@@ -185,9 +204,49 @@ A concrete `STTProvider` implementation that exposes an HTTP endpoint. External 
 - [ ] The endpoint returns a 200 response with the action engine result
 - [ ] The port is configurable
 
+### TRQ-008 — POST /detect-resolution endpoint
+
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Spec:** SPEC-008
+
+**Technical constraint:**
+Screen resolution detection must be performed server-side on the ferdi backend so that Claude Vision or other vision-based processing pipelines can use the detected dimensions for screenshot analysis.
+
+**Description:**
+A FastAPI POST endpoint that detects the primary screen's resolution using a cross-platform library (screeninfo), stores it in application state for later use, and returns it with a confirmation message. The endpoint response is structured to allow clients (VoiceAttack or other frontends) to extract the resolution and provide vocal feedback to the user.
+
+**Acceptance criteria:**
+- [ ] A POST /detect-resolution endpoint exists
+- [ ] The endpoint uses the `screeninfo` library to detect the primary monitor
+- [ ] The detected resolution (width, height) is stored in `app.state.resolution`
+- [ ] The endpoint returns HTTP 200 with `{"width": <int>, "height": <int>, "message": "<confirmation text>"}`
+- [ ] If no primary monitor is found, the endpoint returns HTTP 500 with `{"detail": "No primary monitor found"}`
+
 ## Non-Functional Requirements
 
-<!-- NFR entries go here -->
+### NFR-001 — Cross-platform screen detection
+
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Spec:** SPEC-008
+
+**Non-functional requirement:**
+Screen resolution detection must work consistently on Windows and Linux (X11/Wayland) without using platform-specific APIs.
+
+**Description:**
+The screen resolution detection mechanism must use only cross-platform libraries (e.g. screeninfo) and avoid platform-specific APIs such as ctypes.windll (Windows) or Xlib-specific calls (Linux). This ensures the codebase remains maintainable, testable, and portable across operating systems.
+
+**Acceptance criteria:**
+- [ ] The implementation uses only the `screeninfo` library (or equivalent cross-platform library)
+- [ ] No Windows-specific APIs (e.g., ctypes.windll) appear in the implementation
+- [ ] No Linux-specific direct system calls appear in the implementation
+- [ ] Tests pass on Windows and Linux environments
+- [ ] The same code path is used on both platforms
 
 ## UI Requirements
 

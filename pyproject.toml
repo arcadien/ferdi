@@ -10,9 +10,13 @@ dependencies = [
     "fastapi",
     "faster-whisper>=1.2.1",
     "numpy>=2.4.4",
+    "screeninfo",
     "sounddevice>=0.5.1",
     "uvicorn[standard]",
 ]
+
+[project.scripts]
+serve = "ferdi.main:serve"
 
 [project.optional-dependencies]
 dev = [
