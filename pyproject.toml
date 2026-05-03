@@ -15,6 +15,9 @@ dependencies = [
     "uvicorn[standard]",
 ]
 
+[project.scripts]
+serve = "ferdi.main:serve"
+
 [project.optional-dependencies]
 dev = [
     "pytest",

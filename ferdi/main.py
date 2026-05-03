@@ -1,3 +1,4 @@
+import uvicorn
 import screeninfo
 
 from fastapi import FastAPI, HTTPException
@@ -18,6 +19,10 @@ def set_stt_provider(provider: STTProvider) -> None:
 
 class CommandRequest(BaseModel):
     command: str
+
+
+def serve():
+    uvicorn.run("ferdi.main:app", host="0.0.0.0", port=8000)
 
 
 @app.post("/command")
