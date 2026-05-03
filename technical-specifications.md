@@ -732,3 +732,144 @@ Each acceptance criterion maps to a pytest test in `tests/test_webapi_stt.py`:
 | `POST /stt` accepts `{"text": "..."}` | `test_trq007_post_stt_accepts_text_body` | `TestClient.post("/stt", json={"text": "raise shields"})` → assert status 200 |
 | Endpoint returns action engine result | `test_trq007_post_stt_returns_engine_result` | Assert response JSON contains `"status": "ok"` and a `"result"` key |
 | Port is configurable | `test_trq007_webapi_stt_port_configurable` | Instantiate `WebAPISTT(port=9000)` and assert stored port equals `9000` |
+
+---
+
+## SPEC-008 — Detect Resolution Endpoint (BRQ-001, TRQ-008, NFR-001)
+
+- **Requirements:** BRQ-001, TRQ-008, NFR-001
+- **Date:** 2026-05-03
+- **Status:** Validated
+- **Requirement type:** business, technical, non-functional
+
+### Overview
+
+The ferdi backend exposes a POST endpoint that detects the primary screen's resolution using a cross-platform library. The detected resolution is stored in application state for use by downstream processing (e.g., Claude Vision for screenshot analysis). Clients (VoiceAttack or other frontends) receive the detected dimensions and a confirmation message, which they can use to provide vocal feedback to the user.
+
+### Architecture
+
+```
+Client (VoiceAttack or other frontend)
+        │
+        │  POST http://127.0.0.1:8000/detect-resolution
+        │
+        ▼
+┌──────────────────────────────────┐
+│  ferdi/main.py  (FastAPI)        │
+│  POST /detect-resolution         │
+│  → screeninfo.get_monitors()     │
+│  → find primary monitor          │
+│  → store in app.state.resolution │
+│  → return 200 + resolution data  │
+└──────────────────────────────────┘
+        │
+        │  HTTP 200
+        │  {"width": 2560, "height": 1440, "message": "..."}
+        │
+        ▼
+Client receives response
+        │
+        └─ Extract "message" → send to Say command
+           (VoiceAttack or equivalent)
+        │
+        ▼
+User hears vocal confirmation
+```
+
+**Components:**
+- `screeninfo` library — cross-platform monitor detection
+- `ferdi/main.py` — FastAPI POST /detect-resolution route
+- `app.state.resolution` — application state storage for detected resolution
+
+### Dependency Installation
+
+Add `screeninfo` to the project dependencies:
+
+```bash
+uv add screeninfo
+```
+
+This library works on Windows, Linux (X11), and macOS by using platform-specific backend selection automatically.
+
+### Endpoint Specification
+
+**Request — POST /detect-resolution**
+
+- No request body required
+- HTTP method: POST
+
+**Response — HTTP 200**
+
+```json
+{
+  "width": 2560,
+  "height": 1440,
+  "message": "Resolution 2560 by 1440 detected"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `width` | `int` | Primary monitor width in pixels |
+| `height` | `int` | Primary monitor height in pixels |
+| `message` | `str` | Vocal confirmation message with detected dimensions |
+
+**Error response — HTTP 500**
+
+```json
+{
+  "detail": "No primary monitor found"
+}
+```
+
+Returned when `screeninfo.get_monitors()` returns an empty list or no monitor has `is_primary == True`.
+
+### Implementation Logic
+
+1. Import `screeninfo` at module level
+2. Define a Pydantic response model with fields `width`, `height`, `message`
+3. Implement `POST /detect-resolution`:
+   - Call `screeninfo.get_monitors()`
+   - Filter for monitor where `is_primary == True`
+   - If found:
+     - Extract `width` and `height` attributes
+     - Store `{"width": w, "height": h}` in `app.state.resolution`
+     - Construct message: `f"Resolution {width} by {height} detected"`
+     - Return HTTP 200 with response model
+   - If not found:
+     - Return HTTP 500 with `{"detail": "No primary monitor found"}`
+
+### Client Integration (VoiceAttack example)
+
+VoiceAttack's HTTP plugin can POST to `/detect-resolution` and extract the `message` field:
+
+```
+1. HTTP POST to http://127.0.0.1:8000/detect-resolution
+2. Parse JSON response
+3. Extract "message" field
+4. Use "Say" command to speak the message to the user
+```
+
+Other frontends follow a similar pattern.
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `pyproject.toml` | Modify | Add `screeninfo` dependency |
+| `ferdi/main.py` | Modify | Add POST /detect-resolution endpoint |
+| `tests/test_detect_resolution.py` | Create | Acceptance tests for BRQ-001, TRQ-008, NFR-001 |
+
+### Testing
+
+Each acceptance criterion maps to a pytest test in `tests/test_detect_resolution.py`:
+
+| Criterion | Test name | Validation method |
+|-----------|-----------|-------------------|
+| Endpoint exists and accepts POST | `test_brq001_detect_resolution_endpoint_exists` | `TestClient.post("/detect-resolution")` → assert status 200 or 500 |
+| Detects primary monitor | `test_trq008_detects_primary_monitor` | Mock `screeninfo.get_monitors()` to return a primary monitor; POST → assert response width/height match mock data |
+| Stores resolution in app.state | `test_trq008_stores_resolution_in_state` | POST to endpoint; assert `app.state.resolution` contains detected dimensions |
+| Returns correct response format | `test_trq008_returns_correct_response_format` | Assert response JSON has `width`, `height`, `message` fields with correct types |
+| Returns confirmation message | `test_brq001_returns_confirmation_message` | Assert `message` field contains the detected resolution (e.g., "2560 by 1440") |
+| No primary monitor → HTTP 500 | `test_nfr001_no_monitor_returns_500` | Mock `screeninfo.get_monitors()` to return empty list; POST → assert status 500 and error detail |
+| Cross-platform (Windows/Linux) | `test_nfr001_cross_platform_detection` | Assert `screeninfo` is used (no ctypes.windll or Xlib calls in implementation) |
