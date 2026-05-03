@@ -18,6 +18,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
       - name: Validate conventional commits
+        if: github.event_name == 'push'
         run: |
           uv run python -c "
           import subprocess, re, sys
