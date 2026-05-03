@@ -29,8 +29,9 @@ Requirements are linked to technical specifications in `technical-specifications
 ### BRQ-001 — Detect screen resolution
 
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
 - **Spec:** SPEC-008
 
 **User value:**
@@ -206,8 +207,9 @@ A concrete `STTProvider` implementation that exposes an HTTP endpoint. External 
 ### TRQ-008 — POST /detect-resolution endpoint
 
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
 - **Spec:** SPEC-008
 
 **Technical constraint:**
@@ -228,8 +230,9 @@ A FastAPI POST endpoint that detects the primary screen's resolution using a cro
 ### NFR-001 — Cross-platform screen detection
 
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
 - **Spec:** SPEC-008
 
 **Non-functional requirement:**

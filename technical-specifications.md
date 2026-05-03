@@ -739,7 +739,8 @@ Each acceptance criterion maps to a pytest test in `tests/test_webapi_stt.py`:
 
 - **Requirements:** BRQ-001, TRQ-008, NFR-001
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
+- **Implemented:** 2026-05-03
 - **Requirement type:** business, technical, non-functional
 
 ### Overview
