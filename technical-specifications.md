@@ -1204,7 +1204,7 @@ Each acceptance criterion maps to a pytest test in `tests/test_quantum_route.py`
 
 - **Requirement:** TRQ-011
 - **Date:** 2026-05-03
-- **Status:** Validated
+- **Status:** Implemented
 - **Requirement type:** technical
 
 ### Overview
