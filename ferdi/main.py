@@ -1,8 +1,14 @@
 import time
+import types
 import uvicorn
 import screeninfo
 import yaml
-import pydirectinput
+
+try:
+    import pydirectinput
+except Exception:
+    # pydirectinput is Windows-only; provide a no-op stub on other platforms
+    pydirectinput = types.ModuleType("pydirectinput")
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
