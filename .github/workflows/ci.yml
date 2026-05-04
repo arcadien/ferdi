@@ -23,6 +23,9 @@ jobs:
           uv run python -c "
           import subprocess, re, sys
           msg = subprocess.check_output(['git', 'log', '-1', '--format=%B']).decode().strip().splitlines()[0]
+          if msg.startswith('Merge '):
+              print(f'OK (merge commit, skipping): {msg!r}')
+              sys.exit(0)
           pattern = r'^(feat|fix|docs|style|refactor|test|ci|chore|req)(\([^)]+\))?!?: .+'
           if not re.match(pattern, msg):
               print(f'ERROR: commit message does not follow Conventional Commits:\n  {msg!r}')
