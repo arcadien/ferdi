@@ -48,17 +48,20 @@ def test_trq009_returns_200_with_correct_response_on_success():
          patch("ferdi.main.time.sleep"), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"}
             },
-            "validator": {"type": "bypass"}
-        }
+            {},
+        ]
 
         response = client.post("/quantum-route", json={"destination": "Hurston"})
 
@@ -88,17 +91,20 @@ def test_trq009_executes_key_presses_and_mouse_movement_in_order():
          patch("ferdi.main.time.sleep", mock_sleep), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"}
             },
-            "validator": {"type": "bypass"}
-        }
+            {},
+        ]
 
         response = client.post("/quantum-route", json={"destination": "Hurston"})
 
@@ -143,17 +149,20 @@ def test_trq009_returns_500_when_validator_fails():
          patch("ferdi.main.yaml.safe_load") as mock_yaml, \
          patch("ferdi.main.get_validator") as mock_get_validator:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"}
             },
-            "validator": {"type": "bypass"}
-        }
+            {},
+        ]
 
         # Mock validator to return False
         mock_validator = MagicMock(spec=RouteValidator)
@@ -237,17 +246,20 @@ def test_nfr002_calculates_correct_absolute_coordinates():
          patch("ferdi.main.time.sleep"), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"}
             },
-            "validator": {"type": "bypass"}
-        }
+            {},
+        ]
 
         response = client.post("/quantum-route", json={"destination": "Hurston"})
 
@@ -279,17 +291,20 @@ def test_brq002_quantum_route_endpoint_accepts_destination():
          patch("ferdi.main.time.sleep"), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"}
             },
-            "validator": {"type": "bypass"}
-        }
+            {},
+        ]
 
         response = client.post("/quantum-route", json={"destination": "Arccorp"})
 
@@ -308,17 +323,20 @@ def test_brq002_quantum_route_loads_yaml_config():
          patch("ferdi.main.time.sleep"), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"}
             },
-            "validator": {"type": "bypass"}
-        }
+            {},
+        ]
 
         response = client.post("/quantum-route", json={"destination": "Hurston"})
 

@@ -33,22 +33,24 @@ def test_trq011_typewrite_called_with_real_name():
          patch("ferdi.main.time.sleep"), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"},
             },
-            "validator": {"type": "bypass"},
-            "destinations": {
+            {
                 "Hurston L1": "HUR-L1",
                 "ArcCorp L1": "ARC-L1",
-                "Hurston": "Hurston"
-            }
-        }
+                "Hurston": "Hurston",
+            },
+        ]
 
         # POST with alias "Hurston L1"
         response = client.post("/quantum-route", json={"destination": "Hurston L1"})
@@ -82,21 +84,23 @@ def test_trq011_returns_400_for_unknown_alias():
          patch("ferdi.main.time.sleep"), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"},
             },
-            "validator": {"type": "bypass"},
-            "destinations": {
+            {
                 "Hurston L1": "HUR-L1",
-                "ArcCorp L1": "ARC-L1"
-            }
-        }
+                "ArcCorp L1": "ARC-L1",
+            },
+        ]
 
         # POST with non-existent alias "NonExistent"
         response = client.post("/quantum-route", json={"destination": "NonExistent"})
@@ -121,21 +125,23 @@ def test_trq011_passthrough_when_alias_equals_real_name():
          patch("ferdi.main.time.sleep"), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"},
             },
-            "validator": {"type": "bypass"},
-            "destinations": {
+            {
                 "Hurston": "Hurston",
-                "ArcCorp": "ArcCorp"
-            }
-        }
+                "ArcCorp": "ArcCorp",
+            },
+        ]
 
         # POST with alias "Hurston" which maps to "Hurston" (same value)
         response = client.post("/quantum-route", json={"destination": "Hurston"})
@@ -168,22 +174,24 @@ def test_trq011_yaml_file_loaded_for_destination_resolution():
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
         # Mock YAML with destination mappings
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"},
             },
-            "validator": {"type": "bypass"},
-            "destinations": {
+            {
                 "Hurston L1": "HUR-L1",
                 "Hurston L2": "HUR-L2",
-                "ArcCorp L1": "ARC-L1"
-            }
-        }
+                "ArcCorp L1": "ARC-L1",
+            },
+        ]
 
         response = client.post("/quantum-route", json={"destination": "Hurston L1"})
 
@@ -206,20 +214,22 @@ def test_trq011_error_message_includes_requested_alias():
          patch("ferdi.main.time.sleep"), \
          patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-        mock_yaml.return_value = {
-            "starmap": {
-                "search_field_x_pct": 0.25,
-                "search_field_y_pct": 0.10,
-                "key_open": "F2",
-                "key_validate": "enter",
-                "key_close": "F2",
-                "key_quantum": "b"
+        mock_yaml.side_effect = [
+            {
+                "starmap": {
+                    "search_field_x_pct": 0.25,
+                    "search_field_y_pct": 0.10,
+                    "key_open": "F2",
+                    "key_validate": "enter",
+                    "key_close": "F2",
+                    "key_quantum": "b"
+                },
+                "validator": {"type": "bypass"},
             },
-            "validator": {"type": "bypass"},
-            "destinations": {
-                "Hurston L1": "HUR-L1"
-            }
-        }
+            {
+                "Hurston L1": "HUR-L1",
+            },
+        ]
 
         response = client.post("/quantum-route", json={"destination": "UnknownDest"})
 
@@ -253,22 +263,24 @@ def test_trq011_multiple_aliases_resolved_correctly():
              patch("ferdi.main.time.sleep"), \
              patch("ferdi.main.yaml.safe_load") as mock_yaml:
 
-            mock_yaml.return_value = {
-                "starmap": {
-                    "search_field_x_pct": 0.25,
-                    "search_field_y_pct": 0.10,
-                    "key_open": "F2",
-                    "key_validate": "enter",
-                    "key_close": "F2",
-                    "key_quantum": "b"
+            mock_yaml.side_effect = [
+                {
+                    "starmap": {
+                        "search_field_x_pct": 0.25,
+                        "search_field_y_pct": 0.10,
+                        "key_open": "F2",
+                        "key_validate": "enter",
+                        "key_close": "F2",
+                        "key_quantum": "b"
+                    },
+                    "validator": {"type": "bypass"},
                 },
-                "validator": {"type": "bypass"},
-                "destinations": {
+                {
                     "Hurston L1": "HUR-L1",
                     "ArcCorp": "ArcCorp",
-                    "Area 18": "Area18"
-                }
-            }
+                    "Area 18": "Area18",
+                },
+            ]
 
             response = client.post("/quantum-route", json={"destination": alias})
 
