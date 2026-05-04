@@ -1,0 +1,71 @@
+# Hurston Lagrange points
+Hurston L1: HUR-L1
+Hurston L2: HUR-L2
+Hurston L3: HUR-L3
+Hurston L4: HUR-L4
+Hurston L5: HUR-L5
+
+# ArcCorp Lagrange points
+ArcCorp L1: ARC-L1
+ArcCorp L2: ARC-L2
+ArcCorp L3: ARC-L3
+ArcCorp L4: ARC-L4
+ArcCorp L5: ARC-L5
+
+# Crusader Lagrange points
+Crusader L1: CRU-L1
+Crusader L2: CRU-L2
+Crusader L3: CRU-L3
+Crusader L4: CRU-L4
+Crusader L5: CRU-L5
+
+# MicroTech Lagrange points
+MicroTech L1: MIC-L1
+MicroTech L2: MIC-L2
+MicroTech L3: MIC-L3
+MicroTech L4: MIC-L4
+MicroTech L5: MIC-L5
+
+# Planets
+Hurston: Hurston
+ArcCorp: ArcCorp
+Crusader: Crusader
+MicroTech: MicroTech
+
+# Hurston moons
+Aberdeen: Aberdeen
+Arial: Arial
+Ita: Ita
+Magda: Magda
+
+# ArcCorp moons
+Lyria: Lyria
+Wala: Wala
+
+# Crusader moons
+Cellin: Cellin
+Daymar: Daymar
+Yela: Yela
+
+# MicroTech moons
+Calliope: Calliope
+Clio: Clio
+Euterpe: Euterpe
+
+# Landing zones
+Lorville: Lorville
+Area 18: Area18
+Orison: Orison
+New Babbage: New Babbage
+
+# Space stations
+Everus Harbor: Everus Harbor
+Baijini Point: Baijini Point
+Port Tressler: Port Tressler
+Grim HEX: GrimHEX
+Covalex Hub Gundo: Covalex Hub Gundo
+INS Jericho: INS Jericho
+
+# Jump points
+Pyro Gateway: Pyro Gateway
+Magnus Gateway: Magnus Gateway

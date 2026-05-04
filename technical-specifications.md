@@ -1197,3 +1197,207 @@ Each acceptance criterion maps to a pytest test in `tests/test_quantum_route.py`
 | Factory rejects unknown type | `test_trq010_factory_rejects_unknown_type` | Call `get_validator({"validator": {"type": "unknown"}})`; assert raises `ValueError` |
 | Returns success message | `test_brq002_returns_success_message` | POST with mocked orchestration; assert response JSON has status "ok" and message field |
 | Returns error on validator failure | `test_trq009_returns_error_on_validation_failure` | Mock validator to return False; POST → assert status 500 with error detail |
+
+---
+
+## SPEC-010 — Destination Alias Mapping (TRQ-011)
+
+- **Requirement:** TRQ-011
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Requirement type:** technical
+
+### Overview
+
+Quantum travel destinations in Star Citizen have in-game names (real names) that may be difficult to pronounce or remember in voice commands. Aliases provide voice-friendly alternatives that are easier to speak. The `etc/qt-destinations.yaml` file maps each alias to its real in-game name. VoiceAttack loads the alias keys for voice recognition, while the ferdi server looks up and types the real names into the game's search bar.
+
+### Architecture
+
+```
+VoiceAttack voice command
+        │
+        │  "ferdi get a quantum route to Hurston L1"
+        │  (alias from yaml keys)
+        │
+        ▼
+┌────────────────────────────────────────┐
+│  ferdi/main.py (FastAPI)               │
+│  POST /quantum-route                   │
+│  {"destination": "Hurston L1"}         │
+│  (alias received)                      │
+└────────────────────────────────────────┘
+        │
+        ├─ Load etc/qt-destinations.yaml
+        ├─ Look up "Hurston L1" in dict
+        ├─ Find real name: "HUR-L1"
+        │
+        ▼
+┌────────────────────────────────────────┐
+│  Type real name in search bar          │
+│  pydirectinput.typewrite("HUR-L1")     │
+└────────────────────────────────────────┘
+        │
+        ▼
+Search result shows correct destination
+```
+
+**Components:**
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Destination mappings | `etc/qt-destinations.yaml` | YAML dict mapping aliases to real names |
+| Quantum route endpoint | `ferdi/main.py` | Modified to look up alias → real name |
+| VoiceAttack config | external | Loads alias keys for voice command list |
+
+### File Format
+
+`etc/qt-destinations.yaml` is a flat YAML dictionary. Keys are voice-friendly aliases; values are in-game real names.
+
+```yaml
+# Hurston Lagrange points
+Hurston L1: HUR-L1
+Hurston L2: HUR-L2
+Hurston L3: HUR-L3
+Hurston L4: HUR-L4
+Hurston L5: HUR-L5
+
+# ArcCorp Lagrange points
+ArcCorp L1: ARC-L1
+ArcCorp L2: ARC-L2
+ArcCorp L3: ARC-L3
+ArcCorp L4: ARC-L4
+ArcCorp L5: ARC-L5
+
+# Crusader Lagrange points
+Crusader L1: CRU-L1
+Crusader L2: CRU-L2
+Crusader L3: CRU-L3
+Crusader L4: CRU-L4
+Crusader L5: CRU-L5
+
+# MicroTech Lagrange points
+MicroTech L1: MIC-L1
+MicroTech L2: MIC-L2
+MicroTech L3: MIC-L3
+MicroTech L4: MIC-L4
+MicroTech L5: MIC-L5
+
+# Planets
+Hurston: Hurston
+ArcCorp: ArcCorp
+Crusader: Crusader
+MicroTech: MicroTech
+
+# Hurston moons
+Aberdeen: Aberdeen
+Arial: Arial
+Ita: Ita
+Magda: Magda
+
+# ArcCorp moons
+Lyria: Lyria
+Wala: Wala
+
+# Crusader moons
+Cellin: Cellin
+Daymar: Daymar
+Yela: Yela
+
+# MicroTech moons
+Calliope: Calliope
+Clio: Clio
+Euterpe: Euterpe
+
+# Landing zones
+Lorville: Lorville
+Area 18: Area18
+Orison: Orison
+New Babbage: New Babbage
+
+# Space stations
+Everus Harbor: Everus Harbor
+Baijini Point: Baijini Point
+Port Tressler: Port Tressler
+Grim HEX: GrimHEX
+Covalex Hub Gundo: Covalex Hub Gundo
+INS Jericho: INS Jericho
+
+# Jump points
+Pyro Gateway: Pyro Gateway
+Magnus Gateway: Magnus Gateway
+```
+
+**Key observations:**
+- Some aliases match their real names (e.g., `Hurston: Hurston`)
+- Some differ for pronunciation or brevity (e.g., `Area 18: Area18`, `Grim HEX: GrimHEX`)
+- Lagrange points use voice-friendly names (e.g., `Hurston L1`) mapped to in-game codes (e.g., `HUR-L1`)
+- Space station names may have special characters or spacing that the search bar handles differently
+
+### Endpoint Change
+
+The `POST /quantum-route` endpoint must be modified to:
+
+1. Load `etc/qt-destinations.yaml` as a dictionary
+2. Accept `{"destination": "<alias>"}` in the request body
+3. Look up the alias in the dictionary
+4. **If found:** Type the **real name** (dictionary value) instead of the alias
+5. **If not found:** Return HTTP 400 with `{ "detail": "Unknown destination: <alias>" }`
+
+**Error response example:**
+
+```json
+{
+  "detail": "Unknown destination: Pyro Jump Point"
+}
+```
+
+### VoiceAttack Integration
+
+VoiceAttack's voice command list must load from the YAML alias keys:
+
+```
+1. Load etc/qt-destinations.yaml
+2. Extract all keys (aliases)
+3. Build voice command list from aliases
+4. When alias is spoken, POST to /quantum-route with that alias
+5. Server looks up real name and types it
+```
+
+This allows VoiceAttack to recognize "Hurston L1" and send it to ferdi, which looks up and types "HUR-L1" in the game search bar.
+
+### Implementation Plan
+
+1. Create `etc/qt-destinations.yaml` with the alias→real-name mappings (above).
+2. Modify `ferdi/main.py` and/or `ferdi/quantum_route.py` to:
+   - Load the YAML file at startup or per-request
+   - In the `POST /quantum-route` handler: look up the received alias
+   - If found: pass the real name to the typing function (not the alias)
+   - If not found: return HTTP 400 with error detail
+3. Update `pyproject.toml` to ensure `pyyaml` is listed as a dependency (if not already).
+4. Remove `etc/qt-destinations.txt` (replaced by YAML).
+5. Write acceptance tests in `tests/test_destination_mapping.py`.
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `etc/qt-destinations.yaml` | Create | Alias→real-name mappings for all quantum destinations |
+| `etc/qt-destinations.txt` | Delete | Replaced by YAML format |
+| `ferdi/main.py` or `ferdi/quantum_route.py` | Modify | Look up alias → real name before typing |
+| `pyproject.toml` | Verify | Ensure `pyyaml` is in dependencies |
+| `tests/test_destination_mapping.py` | Create | Acceptance tests for TRQ-011 |
+
+### Testing
+
+Each acceptance criterion maps to a pytest test in `tests/test_destination_mapping.py`:
+
+| Criterion | Test name | Validation method |
+|-----------|-----------|-------------------|
+| YAML file exists with mappings | `test_trq011_yaml_file_exists` | Load `etc/qt-destinations.yaml`; assert it is a dict with at least 50 entries |
+| Alias→real-name mappings are correct | `test_trq011_alias_mappings_correct` | Load YAML; assert `mappings["Hurston L1"] == "HUR-L1"` and similar for other entries |
+| Endpoint looks up alias | `test_trq011_endpoint_looks_up_alias` | POST `/quantum-route` with `{"destination": "Hurston L1"}`; assert orchestration receives real name "HUR-L1" (via mock) |
+| Known alias returns success | `test_trq011_known_alias_returns_200` | POST with known alias; assert status 200 |
+| Unknown alias returns 400 | `test_trq011_unknown_alias_returns_400` | POST with `{"destination": "NonExistent"}`; assert status 400 with `"Unknown destination: NonExistent"` |
+| Error message includes alias | `test_trq011_error_message_includes_alias` | Unknown alias POST; assert error detail contains the requested alias |
+| VoiceAttack can load aliases | `test_trq011_voice_attack_loads_aliases` | Extract all keys from YAML; assert at least 50 unique aliases available |
+| Real names are typed (not aliases) | `test_trq011_types_real_name_not_alias` | Mock `pydirectinput.typewrite()`; POST with alias; assert `typewrite()` called with real name |

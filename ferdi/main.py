@@ -70,17 +70,27 @@ def quantum_route(request: QuantumRouteRequest):
     with open("etc/sc-config.yaml", "r") as f:
         config = yaml.safe_load(f)
 
+    with open("etc/qt-destinations.yaml", "r") as f:
+        destinations = yaml.safe_load(f) or {}
+
     resolution = app.state.resolution
     starmap = config["starmap"]
 
     x = int(resolution["width"] * starmap["search_field_x_pct"])
     y = int(resolution["height"] * starmap["search_field_y_pct"])
 
+    if destinations:
+        if request.destination not in destinations:
+            raise HTTPException(status_code=400, detail=f"Unknown destination: {request.destination}")
+        real_name = destinations[request.destination]
+    else:
+        real_name = request.destination
+
     pydirectinput.press(starmap["key_open"])
     time.sleep(1)
     pydirectinput.moveTo(x, y)
     pydirectinput.click()
-    pydirectinput.typewrite(request.destination, interval=0.05)
+    pydirectinput.typewrite(real_name, interval=0.05)
     pydirectinput.press(starmap["key_validate"])
 
     validator = get_validator(config)
