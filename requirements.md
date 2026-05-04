@@ -59,7 +59,7 @@ A voice command ("detect resolution") is sent to the ferdi backend via HTTP. The
 The user can say "ferdi get a quantum route to [destination]" to automatically set a quantum route in Star Citizen, eliminating the need to manually open the star map, search, and confirm the destination.
 
 **Description:**
-A voice command is sent to the ferdi backend, which automatically opens the star map, searches for the requested destination, confirms the route was set, closes the star map, and activates quantum mode. Valid destinations are loaded from `etc/qt-destinations.txt` at VoiceAttack startup to build the voice command's spoken list.
+A voice command is sent to the ferdi backend, which automatically opens the star map, searches for the requested destination, confirms the route was set, closes the star map, and activates quantum mode. Valid destinations are loaded from `etc/qt-destinations.yaml` at VoiceAttack startup to build the voice command's spoken list.
 
 **Acceptance criteria:**
 - [ ] A POST /quantum-route endpoint exists
@@ -295,6 +295,28 @@ Define a `RouteValidator` abstract interface in `ferdi/validators/base.py` with 
 - [ ] Unknown validator types raise a `ValueError` with a descriptive message
 - [ ] The validator is injected into the quantum-route endpoint (not imported directly)
 
+### TRQ-011 — Destination alias-to-real-name mapping
+
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Spec:** SPEC-010
+
+**Technical constraint:**
+Quantum travel destinations are stored with voice-friendly aliases that differ from their in-game names. VoiceAttack loads aliases for voice recognition, but the backend must look up real names and type them into the game's search bar for accuracy.
+
+**Description:**
+Quantum travel destinations are stored as alias→real-name pairs in `etc/qt-destinations.yaml`. VoiceAttack loads the alias keys for speech recognition at startup. The server receives the alias from the client, looks up the corresponding real name in the YAML file, and types the real name (not the alias) in the game's search bar. Unknown aliases are rejected with an HTTP 400 error.
+
+**Acceptance criteria:**
+- [ ] `etc/qt-destinations.yaml` exists with alias→real-name mappings
+- [ ] The `POST /quantum-route` endpoint looks up the received destination alias in the YAML dict
+- [ ] If the alias is found, the real name is typed in the search bar instead of the alias
+- [ ] If the alias is not found, the endpoint returns HTTP 400 with `{ "detail": "Unknown destination: ..." }`
+- [ ] VoiceAttack loads the alias keys from `etc/qt-destinations.yaml` at startup for the voice command list
+- [ ] Both aliases and real names are stored consistently in a single YAML file
+
 ## Non-Functional Requirements
 
 ### NFR-001 — Cross-platform screen detection
@@ -338,28 +360,6 @@ The quantum-route endpoint must calculate absolute screen coordinates from perce
 - [ ] All UI coordinate values in the implementation use this percentage-based approach
 - [ ] Tests verify correct conversion at multiple resolutions (e.g., 1920x1080, 2560x1440)
 - [ ] Configuration documentation explains the percentage format clearly
-
-### TRQ-011 — Destination alias-to-real-name mapping
-
-- **Date:** 2026-05-03
-- **Status:** Implemented
-- **Validated:** 2026-05-03
-- **Implemented:** 2026-05-03
-- **Spec:** SPEC-010
-
-**Technical constraint:**
-Quantum travel destinations are stored with voice-friendly aliases that differ from their in-game names. VoiceAttack loads aliases for voice recognition, but the backend must look up real names and type them into the game's search bar for accuracy.
-
-**Description:**
-Quantum travel destinations are stored as alias→real-name pairs in `etc/qt-destinations.yaml`. VoiceAttack loads the alias keys for speech recognition at startup. The server receives the alias from the client, looks up the corresponding real name in the YAML file, and types the real name (not the alias) in the game's search bar. Unknown aliases are rejected with an HTTP 400 error.
-
-**Acceptance criteria:**
-- [x] `etc/qt-destinations.yaml` exists with alias→real-name mappings
-- [x] The `POST /quantum-route` endpoint looks up the received destination alias in the YAML dict
-- [x] If the alias is found, the real name is typed in the search bar instead of the alias
-- [x] If the alias is not found, the endpoint returns HTTP 400 with `{ "detail": "Unknown destination: ..." }`
-- [x] VoiceAttack loads the alias keys from `etc/qt-destinations.yaml` at startup for the voice command list
-- [x] Both aliases and real names are stored consistently in a single YAML file
 
 ## UI Requirements
 
