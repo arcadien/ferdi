@@ -47,6 +47,29 @@ A voice command ("detect resolution") is sent to the ferdi backend via HTTP. The
 - [ ] The endpoint returns a 200 response with the detected resolution and a confirmation message
 - [ ] The response format allows the client to extract and vocally confirm the resolution
 
+### BRQ-002 — Set a quantum route by voice
+
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Spec:** SPEC-009
+
+**User value:**
+The user can say "ferdi get a quantum route to [destination]" to automatically set a quantum route in Star Citizen, eliminating the need to manually open the star map, search, and confirm the destination.
+
+**Description:**
+A voice command is sent to the ferdi backend, which automatically opens the star map, searches for the requested destination, confirms the route was set, closes the star map, and activates quantum mode. Valid destinations are loaded from `etc/qt-destinations.txt` at VoiceAttack startup to build the voice command's spoken list.
+
+**Acceptance criteria:**
+- [ ] A POST /quantum-route endpoint exists
+- [ ] The endpoint accepts a destination name and orchestrates the full quantum route flow
+- [ ] The endpoint verifies the screen resolution has been detected first
+- [ ] The endpoint automatically opens the star map, searches for the destination, and closes the star map
+- [ ] The endpoint activates quantum mode after a successful search
+- [ ] The endpoint returns a confirmation message on success
+- [ ] The endpoint returns an error message if the route could not be confirmed
+
 ## Technical Requirements
 
 ### TRQ-001 — FastAPI Skeleton
@@ -225,6 +248,53 @@ A FastAPI POST endpoint that detects the primary screen's resolution using a cro
 - [ ] The endpoint returns HTTP 200 with `{"width": <int>, "height": <int>, "message": "<confirmation text>"}`
 - [ ] If no primary monitor is found, the endpoint returns HTTP 500 with `{"detail": "No primary monitor found"}`
 
+### TRQ-009 — POST /quantum-route endpoint
+
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Spec:** SPEC-009
+
+**Technical constraint:**
+The quantum route flow is complex, involving multiple UI interactions, screen coordinate calculations based on resolution, and an extensible validator interface. A dedicated FastAPI endpoint must orchestrate these steps using configuration files (YAML for coordinates and keybindings) and a pluggable validator strategy.
+
+**Description:**
+A FastAPI POST endpoint that orchestrates the full quantum route flow. It accepts a destination name, uses the stored screen resolution to calculate UI element coordinates as percentages, loads UI configuration from `etc/sc-config.yaml`, executes mouse movements and key presses to open the star map, search for the destination, validate the route was set (using a pluggable validator), and activate quantum mode. The endpoint returns a confirmation message or an error if validation fails.
+
+**Acceptance criteria:**
+- [ ] A POST /quantum-route endpoint exists
+- [ ] The endpoint accepts `{"destination": "<string>"}` as the request body
+- [ ] The endpoint checks that `app.state.resolution` is set; returns HTTP 400 if not
+- [ ] The endpoint loads UI configuration from `etc/sc-config.yaml`
+- [ ] The endpoint calculates absolute UI coordinates from percentage values and resolution
+- [ ] The endpoint opens the star map, searches for the destination, validates the result, and closes the star map
+- [ ] The endpoint activates quantum mode by pressing the configured key
+- [ ] The endpoint returns HTTP 200 with `{"destination": "...", "status": "ok", "message": "Quantum route to ... set"}`
+- [ ] If the validator reports failure, the endpoint returns HTTP 500 with error detail
+
+### TRQ-010 — Pluggable route validator interface
+
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Spec:** SPEC-009
+
+**Technical constraint:**
+Route validation strategies may vary: for testing, a bypass validator is needed; for production, Claude Vision may validate by screenshot analysis. The validator must be pluggable to allow different implementations without changing the endpoint logic.
+
+**Description:**
+Define a `RouteValidator` abstract interface in `ferdi/validators/base.py` with a `validate(destination: str) -> bool` method. Provide two implementations: `BypassValidator` (always returns True) and `ClaudeVisionValidator` (stub for future enhancement). A factory function in `ferdi/validators/__init__.py` selects the active validator based on `etc/sc-config.yaml`.
+
+**Acceptance criteria:**
+- [ ] A `RouteValidator` abstract interface is defined with `validate(destination: str) -> bool`
+- [ ] `BypassValidator` implements `RouteValidator` and always returns True
+- [ ] `ClaudeVisionValidator` implements `RouteValidator` (stub implementation for now)
+- [ ] A factory function selects the validator based on `validator.type` in the config
+- [ ] Unknown validator types raise a `ValueError` with a descriptive message
+- [ ] The validator is injected into the quantum-route endpoint (not imported directly)
+
 ## Non-Functional Requirements
 
 ### NFR-001 — Cross-platform screen detection
@@ -247,6 +317,27 @@ The screen resolution detection mechanism must use only cross-platform libraries
 - [ ] No Linux-specific direct system calls appear in the implementation
 - [ ] Tests pass on Windows and Linux environments
 - [ ] The same code path is used on both platforms
+
+### NFR-002 — UI coordinates as screen percentage
+
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Spec:** SPEC-009
+
+**Non-functional requirement:**
+All UI element positions must be expressed as a percentage of screen width and height, not absolute pixels, to ensure the same configuration works at any screen resolution without modification.
+
+**Description:**
+The quantum-route endpoint must calculate absolute screen coordinates from percentage values using the stored resolution. All UI positions in `etc/sc-config.yaml` must be percentages (0.0 to 1.0 range), and the endpoint converts these to absolute coordinates before moving the mouse or interacting with UI elements. This allows players with different monitor resolutions to use the same configuration file.
+
+**Acceptance criteria:**
+- [ ] The endpoint reads UI positions as percentages from the config file
+- [ ] The endpoint calculates absolute coordinates using: `absolute_x = resolution.width * percentage_x`
+- [ ] All UI coordinate values in the implementation use this percentage-based approach
+- [ ] Tests verify correct conversion at multiple resolutions (e.g., 1920x1080, 2560x1440)
+- [ ] Configuration documentation explains the percentage format clearly
 
 ## UI Requirements
 

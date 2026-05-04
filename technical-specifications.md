@@ -874,3 +874,326 @@ Each acceptance criterion maps to a pytest test in `tests/test_detect_resolution
 | Returns confirmation message | `test_brq001_returns_confirmation_message` | Assert `message` field contains the detected resolution (e.g., "2560 by 1440") |
 | No primary monitor → HTTP 500 | `test_nfr001_no_monitor_returns_500` | Mock `screeninfo.get_monitors()` to return empty list; POST → assert status 500 and error detail |
 | Cross-platform (Windows/Linux) | `test_nfr001_cross_platform_detection` | Assert `screeninfo` is used (no ctypes.windll or Xlib calls in implementation) |
+
+---
+
+## SPEC-009 — Quantum Route Endpoint (BRQ-002, TRQ-009, TRQ-010, NFR-002)
+
+- **Requirements:** BRQ-002, TRQ-009, TRQ-010, NFR-002
+- **Date:** 2026-05-03
+- **Status:** Implemented
+- **Validated:** 2026-05-03
+- **Implemented:** 2026-05-03
+- **Requirement type:** business, technical, non-functional
+
+### Overview
+
+The ferdi backend exposes a POST endpoint that orchestrates the full quantum route flow in Star Citizen. A voice command ("ferdi get a quantum route to [destination]") triggers the endpoint, which:
+1. Verifies the screen resolution has been detected
+2. Loads UI configuration and keybindings from a YAML file
+3. Calculates UI element positions as percentages of screen resolution
+4. Executes the sequence: open star map → search destination → validate route set → close star map → activate quantum
+5. Returns a confirmation or error message
+
+The endpoint uses a pluggable validator interface to support different validation strategies (bypass for testing, Claude Vision for production).
+
+### Architecture
+
+```
+VoiceAttack voice command
+        │
+        │  "ferdi get a quantum route to Hurston"
+        │
+        ▼
+┌────────────────────────────────────────┐
+│  ferdi/main.py (FastAPI)               │
+│  POST /quantum-route                   │
+│  {"destination": "Hurston"}            │
+└────────────────────────────────────────┘
+        │
+        ├─ Load app.state.resolution
+        ├─ Load etc/sc-config.yaml
+        ├─ Calculate absolute coordinates from percentages
+        │
+        ▼
+┌────────────────────────────────────────┐
+│  Quantum Route Orchestrator            │
+│  1. Press key_open (F2)                │
+│  2. Move mouse → click search field    │
+│  3. Type destination                   │
+│  4. Press key_validate (Enter)         │
+│  5. Validate route set (pluggable)     │
+│  6. Press key_close (F2)               │
+│  7. Press key_quantum (B)              │
+└────────────────────────────────────────┘
+        │
+        ▼
+┌────────────────────────────────────────┐
+│  Route Validator (pluggable)           │
+│  • BypassValidator (always True)       │
+│  • ClaudeVisionValidator (stub)        │
+└────────────────────────────────────────┘
+        │
+        ▼
+Response: {"destination": "...", "status": "ok", "message": "Quantum route to Hurston set"}
+```
+
+**Components:**
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| Quantum-route endpoint | `ferdi/main.py` | FastAPI POST /quantum-route handler |
+| Route orchestrator | `ferdi/quantum_route.py` | Implements the full sequence of UI interactions |
+| Route validator interface | `ferdi/validators/base.py` | Abstract `RouteValidator` interface |
+| Bypass validator | `ferdi/validators/bypass.py` | Test implementation (always returns True) |
+| Claude Vision validator | `ferdi/validators/claude_vision.py` | Production implementation (stub for now) |
+| Validator factory | `ferdi/validators/__init__.py` | Selects active validator from config |
+| UI destinations list | `etc/qt-destinations.txt` | One destination per line |
+| Configuration file | `etc/sc-config.yaml` | UI coordinates, keybindings, validator type |
+
+### Configuration Files
+
+#### `etc/qt-destinations.txt`
+
+One destination per line. Used by VoiceAttack to build the spoken command list.
+
+```
+Hurston
+Arccorp
+Microtech
+Stanton
+Port Olisar
+Levski
+```
+
+#### `etc/sc-config.yaml`
+
+Defines UI element positions as percentages, keybindings, and validator selection.
+
+```yaml
+starmap:
+  search_field_x_pct: 0.25    # 25% from left edge
+  search_field_y_pct: 0.10    # 10% from top edge
+  key_open: F2                # Key to open/close star map
+  key_validate: enter         # Key to confirm search
+  key_close: F2               # Key to close star map
+  key_quantum: b              # Key to activate quantum mode
+
+validator:
+  type: bypass                # bypass | claude-vision
+```
+
+### Endpoint Specification
+
+**Request — POST /quantum-route**
+
+```json
+{
+  "destination": "Hurston"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `destination` | `string` | yes | Star Citizen location name |
+
+**Response — HTTP 200**
+
+```json
+{
+  "destination": "Hurston",
+  "status": "ok",
+  "message": "Quantum route to Hurston set"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `destination` | `string` | Echo of the requested destination |
+| `status` | `string` | Always `"ok"` on success |
+| `message` | `string` | Confirmation message for vocal feedback |
+
+**Error response — HTTP 400**
+
+Returned when `app.state.resolution` has not been set.
+
+```json
+{
+  "detail": "Resolution not detected. Run detect-resolution first."
+}
+```
+
+**Error response — HTTP 500**
+
+Returned when the validator reports failure.
+
+```json
+{
+  "detail": "Could not confirm quantum route to Hurston"
+}
+```
+
+### Validator Interface
+
+#### `ferdi/validators/base.py`
+
+```python
+from abc import ABC, abstractmethod
+
+class RouteValidator(ABC):
+    @abstractmethod
+    def validate(self, destination: str) -> bool:
+        """
+        Verify that a quantum route was successfully set.
+        
+        Args:
+            destination: The destination name that should have been set
+            
+        Returns:
+            True if validation succeeds, False otherwise
+        """
+        ...
+```
+
+#### `ferdi/validators/bypass.py`
+
+```python
+from ferdi.validators.base import RouteValidator
+
+class BypassValidator(RouteValidator):
+    """Always returns True. Used for testing without Claude Vision."""
+    
+    def validate(self, destination: str) -> bool:
+        return True
+```
+
+#### `ferdi/validators/claude_vision.py`
+
+```python
+from ferdi.validators.base import RouteValidator
+
+class ClaudeVisionValidator(RouteValidator):
+    """Stub for future implementation. Takes a screenshot and validates via Claude."""
+    
+    def validate(self, destination: str) -> bool:
+        # TODO: Implement in future requirement
+        # For now, return True as a placeholder
+        return True
+```
+
+#### `ferdi/validators/__init__.py`
+
+```python
+from ferdi.validators.base import RouteValidator
+from ferdi.validators.bypass import BypassValidator
+from ferdi.validators.claude_vision import ClaudeVisionValidator
+
+def get_validator(config: dict) -> RouteValidator:
+    """
+    Factory function to select the active validator based on configuration.
+    
+    Args:
+        config: Configuration dict (from etc/sc-config.yaml)
+        
+    Returns:
+        An instance of the selected RouteValidator
+        
+    Raises:
+        ValueError: If validator type is not recognized
+    """
+    type_ = config.get("validator", {}).get("type", "bypass")
+    if type_ == "bypass":
+        return BypassValidator()
+    if type_ == "claude-vision":
+        return ClaudeVisionValidator()
+    raise ValueError(f"Unknown validator type: {type_}")
+```
+
+### Coordinate Calculation
+
+All UI element positions are expressed as percentages (0.0 to 1.0) in the configuration file. At runtime, the endpoint converts to absolute coordinates:
+
+```python
+# Given resolution (from app.state.resolution) and percentage from config
+x_pct = config["starmap"]["search_field_x_pct"]      # e.g., 0.25
+y_pct = config["starmap"]["search_field_y_pct"]      # e.g., 0.10
+width = app.state.resolution["width"]                 # e.g., 2560
+height = app.state.resolution["height"]               # e.g., 1440
+
+# Calculate absolute coordinates
+absolute_x = int(width * x_pct)      # 2560 * 0.25 = 640
+absolute_y = int(height * y_pct)     # 1440 * 0.10 = 144
+```
+
+### Orchestration Flow
+
+The endpoint executes the following sequence:
+
+1. **Validation:** Check that `app.state.resolution` is set (HTTP 400 if not)
+2. **Load configuration:** Read `etc/sc-config.yaml`
+3. **Initialize validator:** Call `get_validator(config)` to get the active validator
+4. **Open star map:** Press `config["starmap"]["key_open"]` (e.g., F2)
+5. **Wait for UI:** Sleep 1 second to allow the UI to load
+6. **Calculate coordinates:** Convert search field percentages to absolute screen coordinates
+7. **Move mouse and click:** Position mouse at (absolute_x, absolute_y) and click
+8. **Type destination:** Send the destination string character by character
+9. **Confirm search:** Press `config["starmap"]["key_validate"]` (e.g., Enter)
+10. **Validate route:** Call `validator.validate(destination)` and check the result
+    - If True: continue to step 11
+    - If False: return HTTP 500 with error detail
+11. **Close star map:** Press `config["starmap"]["key_close"]` (e.g., F2)
+12. **Activate quantum:** Press `config["starmap"]["key_quantum"]` (e.g., B)
+13. **Return success:** HTTP 200 with confirmation message
+
+### Dependencies
+
+The endpoint requires the `pydirectinput` library for mouse movement and keyboard input:
+
+```bash
+uv add pydirectinput
+```
+
+### Implementation Plan
+
+1. Create `ferdi/validators/` package with `__init__.py`, `base.py`, `bypass.py`, `claude_vision.py`.
+2. Create `ferdi/quantum_route.py` with the orchestration logic.
+3. Add the `POST /quantum-route` endpoint to `ferdi/main.py`.
+4. Create `etc/sc-config.yaml` and `etc/qt-destinations.txt` with example content.
+5. Update `pyproject.toml` to add `pydirectinput` and `pyyaml` dependencies.
+6. Write acceptance tests in `tests/test_quantum_route.py`.
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `ferdi/validators/__init__.py` | Create | Validator package marker and factory function |
+| `ferdi/validators/base.py` | Create | `RouteValidator` abstract interface |
+| `ferdi/validators/bypass.py` | Create | `BypassValidator` implementation |
+| `ferdi/validators/claude_vision.py` | Create | `ClaudeVisionValidator` stub implementation |
+| `ferdi/quantum_route.py` | Create | Orchestration logic for quantum route flow |
+| `ferdi/main.py` | Modify | Add POST /quantum-route endpoint |
+| `etc/sc-config.yaml` | Create | Configuration file with UI coordinates and keybindings |
+| `etc/qt-destinations.txt` | Create | List of valid destinations |
+| `pyproject.toml` | Modify | Add `pydirectinput` and `pyyaml` dependencies |
+| `tests/test_quantum_route.py` | Create | Acceptance tests for BRQ-002, TRQ-009, TRQ-010, NFR-002 |
+
+### Testing
+
+Each acceptance criterion maps to a pytest test in `tests/test_quantum_route.py`:
+
+| Criterion | Test name | Validation method |
+|-----------|-----------|-------------------|
+| POST /quantum-route endpoint exists | `test_brq002_quantum_route_endpoint_exists` | `TestClient.post("/quantum-route", json={"destination": "Hurston"})` → assert status 200 or 400 or 500 |
+| Endpoint accepts destination JSON | `test_brq002_endpoint_accepts_destination` | POST with valid destination → assert status 200 |
+| Endpoint checks resolution is set | `test_trq009_checks_resolution_set` | Clear `app.state.resolution`; POST → assert status 400 with "Resolution not detected" |
+| Endpoint loads YAML config | `test_trq009_loads_yaml_config` | Mock file read; verify config is loaded (test via coordinate calculation) |
+| Calculates absolute coordinates | `test_nfr002_calculates_absolute_coordinates` | Given resolution 2560x1440 and x_pct=0.25, verify absolute_x = 640 |
+| Validates at multiple resolutions | `test_nfr002_coordinates_work_at_multiple_resolutions` | Test coordinate conversion at 1920x1080, 2560x1440, 3840x2160 |
+| Validator interface exists | `test_trq010_validator_interface_exists` | Import `RouteValidator`; assert it has `validate` method |
+| BypassValidator returns True | `test_trq010_bypass_validator_always_true` | Instantiate `BypassValidator(); assert validate("any") == True` |
+| ClaudeVisionValidator is stubbed | `test_trq010_claude_vision_validator_stubbed` | Instantiate `ClaudeVisionValidator(); assert validate("any") == True` |
+| Factory selects bypass validator | `test_trq010_factory_selects_bypass` | Call `get_validator({"validator": {"type": "bypass"}})`; assert returns `BypassValidator` instance |
+| Factory selects Claude Vision validator | `test_trq010_factory_selects_claude_vision` | Call `get_validator({"validator": {"type": "claude-vision"}})`; assert returns `ClaudeVisionValidator` instance |
+| Factory rejects unknown type | `test_trq010_factory_rejects_unknown_type` | Call `get_validator({"validator": {"type": "unknown"}})`; assert raises `ValueError` |
+| Returns success message | `test_brq002_returns_success_message` | POST with mocked orchestration; assert response JSON has status "ok" and message field |
+| Returns error on validator failure | `test_trq009_returns_error_on_validation_failure` | Mock validator to return False; POST → assert status 500 with error detail |

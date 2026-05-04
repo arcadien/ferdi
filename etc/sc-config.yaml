@@ -1,0 +1,10 @@
+starmap:
+  search_field_x_pct: 0.25
+  search_field_y_pct: 0.10
+  key_open: F2
+  key_validate: enter
+  key_close: F2
+  key_quantum: b
+
+validator:
+  type: bypass
