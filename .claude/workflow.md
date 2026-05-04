@@ -71,6 +71,7 @@ User describes requirement in conversation
         │   Phase 1: test-writer → RED  → git-manager commits test files
         │   Phase 2: implementer → GREEN → git-manager commits impl files
         │   Phase 3: refactorer  → GREEN (optional)
+        │   Phase 4: docs-reviewer → GREEN (mandatory before PR)
         ▼
    Status: Implemented or Refactored ← git-manager commits requirements.md + technical-specifications.md
 ```
@@ -104,6 +105,16 @@ Delegate to **implementer** (max 2 attempts). After each attempt, delegate to **
 
 Delegate to **refactorer**. Delegate to **test-runner** to confirm still GREEN. If the refactorer returns an `ESCALATE` report (a change would require modifying tests), surface it to the user before proceeding. Commit via **git-manager**.
 
+**Phase 4 — Documentation review (mandatory before PR)**
+
+Delegate to **docs-reviewer**. It reads `requirements.md` and `technical-specifications.md` and runs six consistency checks.
+- GREEN → delegate to **git-manager** to create the PR.
+- RED → surface the report to the user. For each issue, the user either:
+  - **Fixes** it: delegate corrections to **requirements-analyst**, commit via **git-manager**, then re-run **docs-reviewer**.
+  - **Waives** it: acknowledge explicitly; **git-manager** lists waived issues in the PR body.
+
+git-manager must not create a PR until docs-reviewer returns GREEN or all issues are waived.
+
 ## Agent architecture
 
 Six specialized sub-agents handle all work. The orchestrator (main Claude) coordinates them.
@@ -115,6 +126,7 @@ Six specialized sub-agents handle all work. The orchestrator (main Claude) coord
 | `implementer` | Sonnet | production code only |
 | `refactorer` | Sonnet | production code only |
 | `test-runner` | Haiku | nothing (read + run only) |
+| `docs-reviewer` | Haiku | nothing (read only) |
 | `git-manager` | Haiku | git history only |
 
 ### requirements-analyst
@@ -170,6 +182,16 @@ Responsibilities:
 - Push feature branches and create PRs via `gh` CLI
 - Enforce the `req` type rule: any commit touching `requirements.md` or `technical-specifications.md` must use `req` type
 - Never push to `main` — always push to a feature branch
+
+### docs-reviewer
+
+**Tools:** Read, Grep, Glob — no shell execution, no file writes.
+
+Responsibilities:
+- Read `requirements.md` and `technical-specifications.md` in full
+- Run six consistency checks (prefix classification, bidirectional REQ↔SPEC links, status consistency, cross-file references, checkbox format, orphan SPECs)
+- Return GREEN (all checks pass) or RED (structured report listing each issue with location and suggested fix)
+- Never modify any file
 
 ## Requirement types
 
