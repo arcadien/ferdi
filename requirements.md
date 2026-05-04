@@ -339,6 +339,27 @@ The quantum-route endpoint must calculate absolute screen coordinates from perce
 - [ ] Tests verify correct conversion at multiple resolutions (e.g., 1920x1080, 2560x1440)
 - [ ] Configuration documentation explains the percentage format clearly
 
+### TRQ-011 — Destination alias-to-real-name mapping
+
+- **Date:** 2026-05-03
+- **Status:** Validated
+- **Validated:** 2026-05-03
+- **Spec:** SPEC-010
+
+**Technical constraint:**
+Quantum travel destinations are stored with voice-friendly aliases that differ from their in-game names. VoiceAttack loads aliases for voice recognition, but the backend must look up real names and type them into the game's search bar for accuracy.
+
+**Description:**
+Quantum travel destinations are stored as alias→real-name pairs in `etc/qt-destinations.yaml`. VoiceAttack loads the alias keys for speech recognition at startup. The server receives the alias from the client, looks up the corresponding real name in the YAML file, and types the real name (not the alias) in the game's search bar. Unknown aliases are rejected with an HTTP 400 error.
+
+**Acceptance criteria:**
+- [ ] `etc/qt-destinations.yaml` exists with alias→real-name mappings
+- [ ] The `POST /quantum-route` endpoint looks up the received destination alias in the YAML dict
+- [ ] If the alias is found, the real name is typed in the search bar instead of the alias
+- [ ] If the alias is not found, the endpoint returns HTTP 400 with `{ "detail": "Unknown destination: ..." }`
+- [ ] VoiceAttack loads the alias keys from `etc/qt-destinations.yaml` at startup for the voice command list
+- [ ] Both aliases and real names are stored consistently in a single YAML file
+
 ## UI Requirements
 
 <!-- UIR entries go here -->
