@@ -7,8 +7,12 @@ import yaml
 try:
     import pydirectinput
 except Exception:
-    # pydirectinput is Windows-only; provide a no-op stub on other platforms
+    # pydirectinput is Windows-only; stub with no-ops so patch() can replace them in tests
     pydirectinput = types.ModuleType("pydirectinput")
+    pydirectinput.press = lambda *a, **kw: None
+    pydirectinput.moveTo = lambda *a, **kw: None
+    pydirectinput.click = lambda *a, **kw: None
+    pydirectinput.typewrite = lambda *a, **kw: None
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
