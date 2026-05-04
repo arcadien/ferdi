@@ -948,7 +948,7 @@ Response: {"destination": "...", "status": "ok", "message": "Quantum route to Hu
 | Bypass validator | `ferdi/validators/bypass.py` | Test implementation (always returns True) |
 | Claude Vision validator | `ferdi/validators/claude_vision.py` | Production implementation (stub for now) |
 | Validator factory | `ferdi/validators/__init__.py` | Selects active validator from config |
-| UI destinations list | `etc/qt-destinations.txt` | One destination per line |
+| UI destinations list | `etc/qt-destinations.yaml` | Alias→real-name mappings (see SPEC-010) |
 | Configuration file | `etc/sc-config.yaml` | UI coordinates, keybindings, validator type |
 
 ### Configuration Files
