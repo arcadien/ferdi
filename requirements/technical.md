@@ -1,76 +1,9 @@
-# Requirements
+# Technical Requirements
 
-This file documents all user requests as formal requirements for the **ferdi** project.
-Requirements are linked to technical specifications in `technical-specifications.md`.
-
-| Command | Action |
-|---------|--------|
-| `/document <type> <description>` | Create a new requirement (status: Draft) |
-| `/validate <REQ-ID>` | Approve a requirement (status: Validated) — required before TDD |
-| `/tdd <REQ-ID>` | Start TDD cycle: RED → GREEN → optional refactor |
-
-## Requirement types and ID prefixes
-
-| Type | Prefix |
-|------|--------|
-| Business | BRQ-NNN |
-| Technical | TRQ-NNN |
-| Non-Functional | NFR-NNN |
-| UI | UIR-NNN |
-
-## Status lifecycle
-
-`Draft` → `Validated` → `In Progress` → `Implemented` / `Refactored`
+Technical requirements (TRQ-NNN) for the **ferdi** project.
+Linked to technical specifications in `technical-specifications.md`.
 
 ---
-
-## Business Requirements
-
-### BRQ-001 — Detect screen resolution
-
-- **Date:** 2026-05-03
-- **Status:** Implemented
-- **Validated:** 2026-05-03
-- **Implemented:** 2026-05-03
-- **Spec:** SPEC-008
-
-**User value:**
-The user can trigger a voice command to detect and store the primary screen resolution for the current game session. The detected resolution is returned to the client.
-
-**Description:**
-A voice command ("detect resolution") is sent to the ferdi backend via HTTP. The backend detects the primary screen's resolution using a cross-platform library, stores it for later use (e.g., by Claude Vision for screenshot analysis), and returns the detected dimensions to the client. The client (VoiceAttack or other frontend) uses this response to vocally confirm the resolution to the user.
-
-**Acceptance criteria:**
-- [ ] A POST /detect-resolution endpoint exists
-- [ ] The endpoint detects the primary monitor's resolution
-- [ ] The detected resolution is stored in application state for later use
-- [ ] The endpoint returns a 200 response with the detected resolution and a confirmation message
-- [ ] The response format allows the client to extract and vocally confirm the resolution
-
-### BRQ-002 — Set a quantum route by voice
-
-- **Date:** 2026-05-03
-- **Status:** Implemented
-- **Validated:** 2026-05-03
-- **Implemented:** 2026-05-03
-- **Spec:** SPEC-009
-
-**User value:**
-The user can say "ferdi get a quantum route to [destination]" to automatically set a quantum route in Star Citizen, eliminating the need to manually open the star map, search, and confirm the destination.
-
-**Description:**
-A voice command is sent to the ferdi backend, which automatically opens the star map, searches for the requested destination, confirms the route was set, closes the star map, and activates quantum mode. Valid destinations are loaded from `etc/qt-destinations.yaml` at VoiceAttack startup to build the voice command's spoken list.
-
-**Acceptance criteria:**
-- [ ] A POST /quantum-route endpoint exists
-- [ ] The endpoint accepts a destination name and orchestrates the full quantum route flow
-- [ ] The endpoint verifies the screen resolution has been detected first
-- [ ] The endpoint automatically opens the star map, searches for the destination, and closes the star map
-- [ ] The endpoint activates quantum mode after a successful search
-- [ ] The endpoint returns a confirmation message on success
-- [ ] The endpoint returns an error message if the route could not be confirmed
-
-## Technical Requirements
 
 ### TRQ-001 — FastAPI Skeleton
 
@@ -124,12 +57,12 @@ A GitHub Actions workflow must be created to automatically run the pytest test s
 - **Spec:** SPEC-003
 
 **Technical constraint:**
-The ferdi project uses git for version control and GitHub for hosting. Maintaining a consistent, machine-readable commit history is required to support automated changelog generation (TRQ-004). Commits that do not follow a structured format cannot be parsed by changelog tools. Additionally, all changes to `requirements.md` and `technical-specifications.md` must be committed in isolation to keep requirement documents in a consistent, auditable state.
+The ferdi project uses git for version control and GitHub for hosting. Maintaining a consistent, machine-readable commit history is required to support automated changelog generation (TRQ-004). Commits that do not follow a structured format cannot be parsed by changelog tools. Additionally, all changes to `requirements/` and `technical-specifications.md` must be committed in isolation to keep requirement documents in a consistent, auditable state.
 
 **Description:**
 All commits in the ferdi repository must follow the Conventional Commits specification: `<type>[(<scope>)]: <description>` in English. Allowed types are `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `ci`, `chore`, `req`. Scope is optional. The convention must be enforced both locally (pre-commit hook via the `pre-commit` framework with `conventional-pre-commit`) and in CI (GitHub Actions step). The convention must also be documented in `CLAUDE.md`.
 
-Additionally, a custom local `commit-msg` hook rejects any commit that stages `requirements.md` or `technical-specifications.md` unless the commit message type is `req`. All changes to these files must be committed in isolation using the `req` type and documented in `CLAUDE.md`.
+Additionally, a custom local `commit-msg` hook rejects any commit that stages files in `requirements/` or `technical-specifications.md` unless the commit message type is `req`. All changes to these files must be committed in isolation using the `req` type and documented in `CLAUDE.md`.
 
 **Acceptance criteria:**
 - [ ] A `.pre-commit-config.yaml` file exists at the repository root and includes the `conventional-pre-commit` hook
@@ -140,8 +73,8 @@ Additionally, a custom local `commit-msg` hook rejects any commit that stages `r
 - [ ] `CLAUDE.md` documents the Conventional Commits format as a mandatory convention for all commits
 - [ ] The `pre-commit` package is listed in the project dev dependencies (`pyproject.toml`)
 - [ ] `req` is listed as an allowed type in `.pre-commit-config.yaml` alongside `feat`, `fix`, etc.
-- [ ] A custom local `commit-msg` hook in `.pre-commit-config.yaml` rejects any commit that stages `requirements.md` or `technical-specifications.md` unless the commit message type is `req`
-- [ ] `CLAUDE.md` documents that all changes to `requirements.md` and `technical-specifications.md` must be committed in isolation using the `req` type
+- [ ] A custom local `commit-msg` hook rejects any commit that stages files in `requirements/` or `technical-specifications.md` unless the commit message type is `req`
+- [ ] `CLAUDE.md` documents that all changes to `requirements/` and `technical-specifications.md` must be committed in isolation using the `req` type
 
 ### TRQ-004 — On-Demand Release Workflow
 
@@ -316,51 +249,3 @@ Quantum travel destinations are stored as alias→real-name pairs in `etc/qt-des
 - [ ] If the alias is not found, the endpoint returns HTTP 400 with `{ "detail": "Unknown destination: ..." }`
 - [ ] VoiceAttack loads the alias keys from `etc/qt-destinations.yaml` at startup for the voice command list
 - [ ] Both aliases and real names are stored consistently in a single YAML file
-
-## Non-Functional Requirements
-
-### NFR-001 — Cross-platform screen detection
-
-- **Date:** 2026-05-03
-- **Status:** Implemented
-- **Validated:** 2026-05-03
-- **Implemented:** 2026-05-03
-- **Spec:** SPEC-008
-
-**Non-functional requirement:**
-Screen resolution detection must work consistently on Windows and Linux (X11/Wayland) without using platform-specific APIs.
-
-**Description:**
-The screen resolution detection mechanism must use only cross-platform libraries (e.g. screeninfo) and avoid platform-specific APIs such as ctypes.windll (Windows) or Xlib-specific calls (Linux). This ensures the codebase remains maintainable, testable, and portable across operating systems.
-
-**Acceptance criteria:**
-- [ ] The implementation uses only the `screeninfo` library (or equivalent cross-platform library)
-- [ ] No Windows-specific APIs (e.g., ctypes.windll) appear in the implementation
-- [ ] No Linux-specific direct system calls appear in the implementation
-- [ ] Tests pass on Windows and Linux environments
-- [ ] The same code path is used on both platforms
-
-### NFR-002 — UI coordinates as screen percentage
-
-- **Date:** 2026-05-03
-- **Status:** Implemented
-- **Validated:** 2026-05-03
-- **Implemented:** 2026-05-03
-- **Spec:** SPEC-009
-
-**Non-functional requirement:**
-All UI element positions must be expressed as a percentage of screen width and height, not absolute pixels, to ensure the same configuration works at any screen resolution without modification.
-
-**Description:**
-The quantum-route endpoint must calculate absolute screen coordinates from percentage values using the stored resolution. All UI positions in `etc/sc-config.yaml` must be percentages (0.0 to 1.0 range), and the endpoint converts these to absolute coordinates before moving the mouse or interacting with UI elements. This allows players with different monitor resolutions to use the same configuration file.
-
-**Acceptance criteria:**
-- [ ] The endpoint reads UI positions as percentages from the config file
-- [ ] The endpoint calculates absolute coordinates using: `absolute_x = resolution.width * percentage_x`
-- [ ] All UI coordinate values in the implementation use this percentage-based approach
-- [ ] Tests verify correct conversion at multiple resolutions (e.g., 1920x1080, 2560x1440)
-- [ ] Configuration documentation explains the percentage format clearly
-
-## UI Requirements
-
-<!-- UIR entries go here -->
