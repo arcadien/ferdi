@@ -22,7 +22,7 @@ type(scope): description
 - `test`: Test additions or updates
 - `ci`: CI/CD configuration changes
 - `chore`: Build process, dependencies, tooling changes
-- `req`: Changes to `requirements.md` or `technical-specifications.md` — **mandatory** for any commit touching those files
+- `req`: Changes to `requirements/` or `technical-specifications.md` — **mandatory** for any commit touching those files
 
 Install the hook with: `pre-commit install --hook-type commit-msg`
 
@@ -73,18 +73,18 @@ User describes requirement in conversation
         │   Phase 3: refactorer  → GREEN (optional)
         │   Phase 4: docs-reviewer → GREEN (mandatory before PR)
         ▼
-   Status: Implemented or Refactored ← git-manager commits requirements.md + technical-specifications.md
+   Status: Implemented or Refactored ← git-manager commits requirements/<type>.md + technical-specifications.md
 ```
 
 ### Rules
 
-- **Discuss requirements in conversation before writing any files.** Only write to `requirements.md` once the user has agreed on the content.
+- **Discuss requirements in conversation before writing any files.** Only write to `requirements/` once the user has agreed on the content.
 - **No code is written before a requirement reaches `Validated` status.**
 - The user must explicitly approve a requirement before TDD begins.
 - Tests are written before implementation (TDD). Tests must be RED before implementation starts.
 - The full test suite must be GREEN before a requirement is marked `Implemented`.
 - Refactor only happens after all tests are green; tests must stay green throughout.
-- `requirements.md` and `technical-specifications.md` must always be sufficient for another agent or developer to re-implement any feature from scratch.
+- `requirements/` and `technical-specifications.md` must always be sufficient for another agent or developer to re-implement any feature from scratch.
 
 ### TDD cycle
 
@@ -107,7 +107,7 @@ Delegate to **refactorer**. Delegate to **test-runner** to confirm still GREEN. 
 
 **Phase 4 — Documentation review (mandatory before PR)**
 
-Delegate to **docs-reviewer**. It reads `requirements.md` and `technical-specifications.md` and runs six consistency checks.
+Delegate to **docs-reviewer**. It reads all files in `requirements/` and `technical-specifications.md` and runs six consistency checks.
 - GREEN → delegate to **git-manager** to create the PR.
 - RED → surface the report to the user. For each issue, the user either:
   - **Fixes** it: delegate corrections to **requirements-analyst**, commit via **git-manager**, then re-run **docs-reviewer**.
@@ -121,7 +121,7 @@ Six specialized sub-agents handle all work. The orchestrator (main Claude) coord
 
 | Agent | Model | Writes to |
 |-------|-------|-----------|
-| `requirements-analyst` | Haiku | `requirements.md`, `technical-specifications.md` |
+| `requirements-analyst` | Haiku | `requirements/`, `technical-specifications.md` |
 | `test-writer` | Haiku | `tests/` only |
 | `implementer` | Sonnet | production code only |
 | `refactorer` | Sonnet | production code only |
@@ -134,7 +134,7 @@ Six specialized sub-agents handle all work. The orchestrator (main Claude) coord
 **Tools:** Read, Write, Edit — no shell execution.
 
 Responsibilities:
-- Write and update `requirements.md` and `technical-specifications.md`
+- Write and update the appropriate file in `requirements/` and `technical-specifications.md`
 - Update requirement and spec statuses
 
 ### test-writer
@@ -180,7 +180,7 @@ Responsibilities:
 Responsibilities:
 - Stage specific files and create conventional commits
 - Push feature branches and create PRs via `gh` CLI
-- Enforce the `req` type rule: any commit touching `requirements.md` or `technical-specifications.md` must use `req` type
+- Enforce the `req` type rule: any commit touching `requirements/` or `technical-specifications.md` must use `req` type
 - Never push to `main` — always push to a feature branch
 
 ### docs-reviewer
@@ -188,7 +188,7 @@ Responsibilities:
 **Tools:** Read, Grep, Glob — no shell execution, no file writes.
 
 Responsibilities:
-- Read `requirements.md` and `technical-specifications.md` in full
+- Read all files in `requirements/` and `technical-specifications.md` in full
 - Run six consistency checks (prefix classification, bidirectional REQ↔SPEC links, status consistency, cross-file references, checkbox format, orphan SPECs)
 - Return GREEN (all checks pass) or RED (structured report listing each issue with location and suggested fix)
 - Never modify any file
