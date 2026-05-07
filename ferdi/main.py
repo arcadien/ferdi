@@ -17,6 +17,7 @@ except Exception:
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from ferdi.screenshot import capture_screen
 from ferdi.stt.base import STTProvider
 from ferdi.validators import get_validator
 
@@ -41,6 +42,12 @@ class QuantumRouteRequest(BaseModel):
 
 def serve():
     uvicorn.run("ferdi.main:app", host="0.0.0.0", port=8000)
+
+
+@app.post("/snapshot")
+def post_snapshot():
+    path = capture_screen()
+    return {"path": str(path).replace("\\", "/")}
 
 
 @app.post("/command")
