@@ -1408,8 +1408,9 @@ Each acceptance criterion maps to a pytest test in `tests/test_destination_mappi
 
 - **Requirement:** BRQ-003
 - **Date:** 2026-05-05
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-05
+- **Implemented:** 2026-05-05
 - **Requirement type:** business
 
 ### Overview

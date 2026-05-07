@@ -52,8 +52,9 @@ A voice command is sent to the ferdi backend, which automatically opens the star
 ### BRQ-003 — Screen snapshot command
 
 - **Date:** 2026-05-05
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-05
+- **Implemented:** 2026-05-05
 - **Spec:** SPEC-011
 
 **User value:**
