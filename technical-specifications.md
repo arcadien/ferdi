@@ -953,17 +953,17 @@ Response: {"destination": "...", "status": "ok", "message": "Quantum route to Hu
 
 ### Configuration Files
 
-#### `etc/qt-destinations.txt`
+#### `etc/qt-destinations.yaml`
 
-One destination per line. Used by VoiceAttack to build the spoken command list.
+YAML dictionary mapping aliases to real destination names. Used by VoiceAttack to build the spoken command list and by ferdi to look up the actual in-game names.
 
-```
-Hurston
-Arccorp
-Microtech
-Stanton
-Port Olisar
-Levski
+```yaml
+Hurston: Hurston
+Arccorp: Arccorp
+Microtech: Microtech
+Stanton: Stanton
+Port Olisar: Port Olisar
+Levski: Levski
 ```
 
 #### `etc/sc-config.yaml`
@@ -1173,7 +1173,7 @@ uv add pydirectinput
 | `ferdi/quantum_route.py` | Create | Orchestration logic for quantum route flow |
 | `ferdi/main.py` | Modify | Add POST /quantum-route endpoint |
 | `etc/sc-config.yaml` | Create | Configuration file with UI coordinates and keybindings |
-| `etc/qt-destinations.txt` | Create | List of valid destinations |
+| `etc/qt-destinations.yaml` | Create | Alias→real-name mappings for quantum destinations |
 | `pyproject.toml` | Modify | Add `pydirectinput` and `pyyaml` dependencies |
 | `tests/test_quantum_route.py` | Create | Acceptance tests for BRQ-002, TRQ-009, TRQ-010, NFR-002 |
 
