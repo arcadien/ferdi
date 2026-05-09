@@ -9,7 +9,6 @@ These tests verify that:
 """
 
 from unittest.mock import MagicMock, patch
-import yaml
 
 from starlette.testclient import TestClient
 
@@ -20,19 +19,21 @@ client = TestClient(app)
 
 # --- Acceptance Criterion 1: typewrite is called with real name when alias exists ---
 
+
 def test_trq011_typewrite_called_with_real_name():
     """When destination alias exists in YAML, pydirectinput.typewrite must be called with the real name (not the alias)."""
     app.state.resolution = {"width": 2560, "height": 1440}
 
     mock_typewrite = MagicMock()
 
-    with patch("ferdi.main.pydirectinput.press"), \
-         patch("ferdi.main.pydirectinput.moveTo"), \
-         patch("ferdi.main.pydirectinput.click"), \
-         patch("ferdi.main.pydirectinput.typewrite", mock_typewrite), \
-         patch("ferdi.main.time.sleep"), \
-         patch("ferdi.main.yaml.safe_load") as mock_yaml:
-
+    with (
+        patch("ferdi.main.pydirectinput.press"),
+        patch("ferdi.main.pydirectinput.moveTo"),
+        patch("ferdi.main.pydirectinput.click"),
+        patch("ferdi.main.pydirectinput.typewrite", mock_typewrite),
+        patch("ferdi.main.time.sleep"),
+        patch("ferdi.main.yaml.safe_load") as mock_yaml,
+    ):
         mock_yaml.side_effect = [
             {
                 "starmap": {
@@ -41,7 +42,7 @@ def test_trq011_typewrite_called_with_real_name():
                     "key_open": "F2",
                     "key_validate": "enter",
                     "key_close": "F2",
-                    "key_quantum": "b"
+                    "key_quantum": "b",
                 },
                 "validator": {"type": "bypass"},
             },
@@ -68,22 +69,26 @@ def test_trq011_typewrite_called_with_real_name():
             found_real_name = True
             break
 
-    assert found_real_name, f"typewrite should be called with real name 'HUR-L1', but got calls: {typewrite_calls}"
+    assert found_real_name, (
+        f"typewrite should be called with real name 'HUR-L1', but got calls: {typewrite_calls}"
+    )
 
 
 # --- Acceptance Criterion 2: Returns HTTP 400 for unknown alias ---
+
 
 def test_trq011_returns_400_for_unknown_alias():
     """When destination alias is not found in YAML, endpoint must return HTTP 400 with 'Unknown destination: <alias>' error."""
     app.state.resolution = {"width": 2560, "height": 1440}
 
-    with patch("ferdi.main.pydirectinput.press"), \
-         patch("ferdi.main.pydirectinput.moveTo"), \
-         patch("ferdi.main.pydirectinput.click"), \
-         patch("ferdi.main.pydirectinput.typewrite"), \
-         patch("ferdi.main.time.sleep"), \
-         patch("ferdi.main.yaml.safe_load") as mock_yaml:
-
+    with (
+        patch("ferdi.main.pydirectinput.press"),
+        patch("ferdi.main.pydirectinput.moveTo"),
+        patch("ferdi.main.pydirectinput.click"),
+        patch("ferdi.main.pydirectinput.typewrite"),
+        patch("ferdi.main.time.sleep"),
+        patch("ferdi.main.yaml.safe_load") as mock_yaml,
+    ):
         mock_yaml.side_effect = [
             {
                 "starmap": {
@@ -92,7 +97,7 @@ def test_trq011_returns_400_for_unknown_alias():
                     "key_open": "F2",
                     "key_validate": "enter",
                     "key_close": "F2",
-                    "key_quantum": "b"
+                    "key_quantum": "b",
                 },
                 "validator": {"type": "bypass"},
             },
@@ -112,19 +117,21 @@ def test_trq011_returns_400_for_unknown_alias():
 
 # --- Acceptance Criterion 3: Passthrough case (alias equals real name) ---
 
+
 def test_trq011_passthrough_when_alias_equals_real_name():
     """When alias and real name are identical, typewrite is called with that name (passthrough case)."""
     app.state.resolution = {"width": 2560, "height": 1440}
 
     mock_typewrite = MagicMock()
 
-    with patch("ferdi.main.pydirectinput.press"), \
-         patch("ferdi.main.pydirectinput.moveTo"), \
-         patch("ferdi.main.pydirectinput.click"), \
-         patch("ferdi.main.pydirectinput.typewrite", mock_typewrite), \
-         patch("ferdi.main.time.sleep"), \
-         patch("ferdi.main.yaml.safe_load") as mock_yaml:
-
+    with (
+        patch("ferdi.main.pydirectinput.press"),
+        patch("ferdi.main.pydirectinput.moveTo"),
+        patch("ferdi.main.pydirectinput.click"),
+        patch("ferdi.main.pydirectinput.typewrite", mock_typewrite),
+        patch("ferdi.main.time.sleep"),
+        patch("ferdi.main.yaml.safe_load") as mock_yaml,
+    ):
         mock_yaml.side_effect = [
             {
                 "starmap": {
@@ -133,7 +140,7 @@ def test_trq011_passthrough_when_alias_equals_real_name():
                     "key_open": "F2",
                     "key_validate": "enter",
                     "key_close": "F2",
-                    "key_quantum": "b"
+                    "key_quantum": "b",
                 },
                 "validator": {"type": "bypass"},
             },
@@ -157,22 +164,26 @@ def test_trq011_passthrough_when_alias_equals_real_name():
             found_passthrough = True
             break
 
-    assert found_passthrough, f"typewrite should be called with 'Hurston', but got calls: {typewrite_calls}"
+    assert found_passthrough, (
+        f"typewrite should be called with 'Hurston', but got calls: {typewrite_calls}"
+    )
 
 
 # --- Acceptance Criterion 4: YAML file is loaded to resolve mapping ---
+
 
 def test_trq011_yaml_file_loaded_for_destination_resolution():
     """YAML file must be loaded to resolve destination alias→real-name mapping."""
     app.state.resolution = {"width": 2560, "height": 1440}
 
-    with patch("ferdi.main.pydirectinput.press"), \
-         patch("ferdi.main.pydirectinput.moveTo"), \
-         patch("ferdi.main.pydirectinput.click"), \
-         patch("ferdi.main.pydirectinput.typewrite"), \
-         patch("ferdi.main.time.sleep"), \
-         patch("ferdi.main.yaml.safe_load") as mock_yaml:
-
+    with (
+        patch("ferdi.main.pydirectinput.press"),
+        patch("ferdi.main.pydirectinput.moveTo"),
+        patch("ferdi.main.pydirectinput.click"),
+        patch("ferdi.main.pydirectinput.typewrite"),
+        patch("ferdi.main.time.sleep"),
+        patch("ferdi.main.yaml.safe_load") as mock_yaml,
+    ):
         # Mock YAML with destination mappings
         mock_yaml.side_effect = [
             {
@@ -182,7 +193,7 @@ def test_trq011_yaml_file_loaded_for_destination_resolution():
                     "key_open": "F2",
                     "key_validate": "enter",
                     "key_close": "F2",
-                    "key_quantum": "b"
+                    "key_quantum": "b",
                 },
                 "validator": {"type": "bypass"},
             },
@@ -203,17 +214,19 @@ def test_trq011_yaml_file_loaded_for_destination_resolution():
 
 # --- Additional validation test: Error message includes the unknown alias ---
 
+
 def test_trq011_error_message_includes_requested_alias():
     """When alias is unknown, error message must include the requested alias in 'Unknown destination: <alias>' format."""
     app.state.resolution = {"width": 2560, "height": 1440}
 
-    with patch("ferdi.main.pydirectinput.press"), \
-         patch("ferdi.main.pydirectinput.moveTo"), \
-         patch("ferdi.main.pydirectinput.click"), \
-         patch("ferdi.main.pydirectinput.typewrite"), \
-         patch("ferdi.main.time.sleep"), \
-         patch("ferdi.main.yaml.safe_load") as mock_yaml:
-
+    with (
+        patch("ferdi.main.pydirectinput.press"),
+        patch("ferdi.main.pydirectinput.moveTo"),
+        patch("ferdi.main.pydirectinput.click"),
+        patch("ferdi.main.pydirectinput.typewrite"),
+        patch("ferdi.main.time.sleep"),
+        patch("ferdi.main.yaml.safe_load") as mock_yaml,
+    ):
         mock_yaml.side_effect = [
             {
                 "starmap": {
@@ -222,7 +235,7 @@ def test_trq011_error_message_includes_requested_alias():
                     "key_open": "F2",
                     "key_validate": "enter",
                     "key_close": "F2",
-                    "key_quantum": "b"
+                    "key_quantum": "b",
                 },
                 "validator": {"type": "bypass"},
             },
@@ -236,11 +249,13 @@ def test_trq011_error_message_includes_requested_alias():
     assert response.status_code == 400
     data = response.json()
     # Error detail should contain "Unknown destination:" followed by the requested alias
-    assert "Unknown destination: UnknownDest" in data["detail"], \
+    assert "Unknown destination: UnknownDest" in data["detail"], (
         f"Expected error detail to contain 'Unknown destination: UnknownDest', got: {data['detail']}"
+    )
 
 
 # --- Integration test: Multiple aliases mapped correctly ---
+
 
 def test_trq011_multiple_aliases_resolved_correctly():
     """Multiple aliases should resolve to their corresponding real names."""
@@ -256,13 +271,14 @@ def test_trq011_multiple_aliases_resolved_correctly():
     for alias, expected_real_name in test_cases:
         mock_typewrite = MagicMock()
 
-        with patch("ferdi.main.pydirectinput.press"), \
-             patch("ferdi.main.pydirectinput.moveTo"), \
-             patch("ferdi.main.pydirectinput.click"), \
-             patch("ferdi.main.pydirectinput.typewrite", mock_typewrite), \
-             patch("ferdi.main.time.sleep"), \
-             patch("ferdi.main.yaml.safe_load") as mock_yaml:
-
+        with (
+            patch("ferdi.main.pydirectinput.press"),
+            patch("ferdi.main.pydirectinput.moveTo"),
+            patch("ferdi.main.pydirectinput.click"),
+            patch("ferdi.main.pydirectinput.typewrite", mock_typewrite),
+            patch("ferdi.main.time.sleep"),
+            patch("ferdi.main.yaml.safe_load") as mock_yaml,
+        ):
             mock_yaml.side_effect = [
                 {
                     "starmap": {
@@ -271,7 +287,7 @@ def test_trq011_multiple_aliases_resolved_correctly():
                         "key_open": "F2",
                         "key_validate": "enter",
                         "key_close": "F2",
-                        "key_quantum": "b"
+                        "key_quantum": "b",
                     },
                     "validator": {"type": "bypass"},
                 },
@@ -284,8 +300,9 @@ def test_trq011_multiple_aliases_resolved_correctly():
 
             response = client.post("/quantum-route", json={"destination": alias})
 
-        assert response.status_code == 200, \
+        assert response.status_code == 200, (
             f"Expected status 200 for alias '{alias}', got {response.status_code}"
+        )
 
         # Verify the correct real name was typed
         typewrite_calls = mock_typewrite.call_args_list
@@ -293,5 +310,6 @@ def test_trq011_multiple_aliases_resolved_correctly():
             len(call[0]) > 0 and call[0][0] == expected_real_name
             for call in typewrite_calls
         )
-        assert found_real_name, \
+        assert found_real_name, (
             f"Expected typewrite to be called with '{expected_real_name}' for alias '{alias}', got: {typewrite_calls}"
+        )

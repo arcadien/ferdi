@@ -5,8 +5,6 @@ These tests are written before the implementation exists and are expected to
 fail (RED) until ferdi/stt/webapi_stt.py is created.
 """
 
-import pytest
-
 
 def test_trq007_webapi_stt_implements_provider():
     """WebAPISTT must be a subclass of STTProvider."""
@@ -50,9 +48,7 @@ def test_trq007_post_stt_returns_engine_result():
     assert data.get("status") == "ok", (
         f"Response must contain 'status': 'ok', got: {data}"
     )
-    assert "result" in data, (
-        f"Response must contain a 'result' key, got: {data}"
-    )
+    assert "result" in data, f"Response must contain a 'result' key, got: {data}"
 
 
 def test_trq007_post_stt_missing_text_returns_422():
@@ -77,9 +73,7 @@ def test_trq007_webapi_stt_port_configurable():
 
     instance = WebAPISTT(port=9000)
 
-    assert instance.port == 9000, (
-        "WebAPISTT must expose the configured port as .port"
-    )
+    assert instance.port == 9000, "WebAPISTT must expose the configured port as .port"
 
 
 def test_trq007_factory_selects_webapi_provider_from_env(monkeypatch):

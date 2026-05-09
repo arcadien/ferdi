@@ -6,11 +6,8 @@ fail (RED) until ferdi/stt/whisper_stt.py is created.
 """
 
 import io
-import os
 import struct
 import wave
-
-import pytest
 
 
 def _make_wav_bytes(duration_seconds: float = 1.0, sample_rate: int = 16000) -> bytes:
