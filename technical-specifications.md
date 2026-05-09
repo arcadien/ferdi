@@ -1555,3 +1555,150 @@ Each acceptance criterion maps to a pytest test in `tests/test_snapshot.py`:
 | Screenshots directory created automatically | `test_brq003_screenshots_dir_created_automatically` | Delete `screenshots/` before POST → POST → assert `Path("screenshots").exists()` |
 | Capture function is reusable | `test_brq003_capture_function_is_reusable` | Import `capture_screen` directly; call it; assert returned `Path` exists and is a PNG file |
 | Timestamp format matches spec | `test_brq003_timestamp_format_correct` | POST → parse timestamp from path → assert it can be parsed with `strptime(..., "%Y-%m-%d_%H-%M-%S")` |
+
+---
+
+## SPEC-012 — Ruff Linter and Formatter (NFR-003)
+
+- **Requirement:** NFR-003
+- **Date:** 2026-05-05
+- **Status:** Validated
+- **Validated:** 2026-05-05
+- **Requirement type:** non-functional
+
+### Overview
+
+Ruff is a single, unified tool that replaces multiple Python linting and formatting tools (pylint, black, isort, flake8, etc.) with a fast, Rust-based implementation. For ferdi, ruff is integrated as a dev dependency, configured with default settings, and invoked automatically via pre-commit hooks and in the CI pipeline. This ensures all code in the repository adheres to a consistent style and passes linting checks before being merged.
+
+### Architecture
+
+```
+Developer commits code
+        │
+        ▼
+Pre-commit hook (ruff-pre-commit)
+        │
+        ├─ ruff check --fix (fix auto-fixable issues)
+        ├─ ruff format (auto-format code)
+        │
+        ├─ Stage fixed files
+        │
+        └─ COMMIT (if all checks pass)
+        │
+        ▼
+Code pushed to GitHub
+        │
+        ▼
+GitHub Actions CI workflow
+        │
+        ├─ ruff check ferdi/ tests/
+        │  (fails if any linting issues remain)
+        │
+        ├─ ruff format --check ferdi/ tests/
+        │  (fails if formatting is inconsistent)
+        │
+        ├─ If both pass → green check (✓)
+        │
+        └─ If either fails → red check (✗)
+        │
+        ▼
+Code quality maintained across the codebase
+```
+
+**Components:**
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| ruff dependency | `pyproject.toml` | Dev dependency, installed via `uv add --dev ruff` |
+| ruff tool config | `pyproject.toml` | `[tool.ruff]` section (uses default settings) |
+| Pre-commit hooks | `.pre-commit-config.yaml` | Two hooks: `ruff check --fix` and `ruff format` |
+| CI lint step | `.github/workflows/ci.yml` | Runs `ruff check ferdi/ tests/` |
+| CI format step | `.github/workflows/ci.yml` | Runs `ruff format --check ferdi/ tests/` |
+
+### Installation and Configuration
+
+#### 1. Add ruff as a dev dependency
+
+```bash
+uv add --dev ruff
+```
+
+This updates `pyproject.toml` with ruff in the `[project.optional-dependencies]` section (or equivalent).
+
+#### 2. Configure ruff in `pyproject.toml`
+
+Ruff is configured with default settings. If custom rule overrides become necessary in the future, they are added to the `[tool.ruff]` section. For now, no overrides are applied:
+
+```toml
+[tool.ruff]
+# Default configuration; no custom rule overrides
+```
+
+#### 3. Add pre-commit hooks in `.pre-commit-config.yaml`
+
+Two ruff hooks are added to the existing `.pre-commit-config.yaml`:
+
+```yaml
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.1.0  # Use the latest stable version
+  hooks:
+    - id: ruff
+      args: ["check", "--fix"]
+    - id: ruff-format
+```
+
+These hooks:
+- **`ruff check --fix`** — Lints the code and automatically fixes fixable violations
+- **`ruff format`** — Reformats code to conform to the standard style
+
+Both hooks run before each commit, ensuring that only correctly linted and formatted code is committed.
+
+#### 4. Add ruff checks to CI workflow
+
+In `.github/workflows/ci.yml`, add two steps after dependency installation:
+
+```yaml
+- name: Lint with ruff
+  run: ruff check ferdi/ tests/
+
+- name: Format check with ruff
+  run: ruff format --check ferdi/ tests/
+```
+
+These steps:
+- Run on every push and pull request
+- Fail the workflow if any linting violations are found
+- Fail the workflow if formatting is inconsistent
+
+### Files to Create or Modify
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `pyproject.toml` | Modify | Add `ruff` as a dev dependency and `[tool.ruff]` section with default settings |
+| `.pre-commit-config.yaml` | Modify | Add `ruff check --fix` and `ruff format` hooks from `ruff-pre-commit` repository |
+| `.github/workflows/ci.yml` | Modify | Add `ruff check` and `ruff format --check` steps after dependency installation |
+
+### Testing
+
+Acceptance criteria are verified through:
+
+1. **Dependency installed** — Running `uv sync --extra dev` or `pip list` shows ruff is available
+2. **Lint check exits 0** — Running `ruff check ferdi/ tests/` exits with code 0 (no violations)
+3. **Format check exits 0** — Running `ruff format --check ferdi/ tests/` exits with code 0 (no formatting issues)
+4. **Pre-commit hooks installed** — Running `pre-commit run --all-files` executes ruff hooks and all files pass
+5. **CI workflow steps present** — Inspecting `.github/workflows/ci.yml` confirms both `ruff check` and `ruff format --check` steps exist and run
+6. **Fixed files are staged** — The `ruff check --fix` hook auto-fixes violations; modified files are staged before commit
+7. **Consistent formatting** — All Python files in `ferdi/` and `tests/` follow ruff's default formatting standard
+
+Each acceptance criterion maps to a pytest test in `tests/test_ruff_integration.py`:
+
+| Criterion | Test name | Validation method |
+|-----------|-----------|-------------------|
+| ruff is installed as dev dependency | `test_nfr003_ruff_installed_as_dev_dependency` | Check `pyproject.toml` contains `ruff` in dev dependencies section |
+| ruff check exits 0 on ferdi/ tests/ | `test_nfr003_ruff_check_exits_zero` | Run `ruff check ferdi/ tests/` → assert exit code 0 |
+| ruff format --check exits 0 | `test_nfr003_ruff_format_check_exits_zero` | Run `ruff format --check ferdi/ tests/` → assert exit code 0 |
+| Pre-commit hook for ruff check configured | `test_nfr003_precommit_ruff_check_configured` | Parse `.pre-commit-config.yaml` → assert `ruff` hook with `check --fix` exists |
+| Pre-commit hook for ruff format configured | `test_nfr003_precommit_ruff_format_configured` | Parse `.pre-commit-config.yaml` → assert `ruff-format` hook exists |
+| CI workflow includes ruff check step | `test_nfr003_ci_includes_ruff_check_step` | Parse `.github/workflows/ci.yml` → assert `ruff check` step exists |
+| CI workflow includes ruff format step | `test_nfr003_ci_includes_ruff_format_step` | Parse `.github/workflows/ci.yml` → assert `ruff format --check` step exists |
+| Default ruff config applies | `test_nfr003_default_ruff_config_applies` | Check `pyproject.toml` → assert `[tool.ruff]` section exists (may be empty or minimal) |
