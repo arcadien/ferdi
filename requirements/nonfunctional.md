@@ -50,8 +50,9 @@ The quantum-route endpoint must calculate absolute screen coordinates from perce
 ### NFR-003 — Ruff linter and formatter
 
 - **Date:** 2026-05-05
-- **Status:** Validated
+- **Status:** Implemented
 - **Validated:** 2026-05-05
+- **Implemented:** 2026-05-05
 - **Spec:** SPEC-012
 
 **Non-functional requirement:**
