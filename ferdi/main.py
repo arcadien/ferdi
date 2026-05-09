@@ -76,7 +76,10 @@ def detect_resolution():
 @app.post("/quantum-route")
 def quantum_route(request: QuantumRouteRequest):
     if not hasattr(app.state, "resolution") or app.state.resolution is None:
-        raise HTTPException(status_code=400, detail="Resolution not detected. Run detect-resolution first.")
+        raise HTTPException(
+            status_code=400,
+            detail="Resolution not detected. Run detect-resolution first.",
+        )
 
     with open("etc/sc-config.yaml", "r") as f:
         config = yaml.safe_load(f)
@@ -92,7 +95,9 @@ def quantum_route(request: QuantumRouteRequest):
 
     if destinations:
         if request.destination not in destinations:
-            raise HTTPException(status_code=400, detail=f"Unknown destination: {request.destination}")
+            raise HTTPException(
+                status_code=400, detail=f"Unknown destination: {request.destination}"
+            )
         real_name = destinations[request.destination]
     else:
         real_name = request.destination
@@ -106,7 +111,10 @@ def quantum_route(request: QuantumRouteRequest):
 
     validator = get_validator(config)
     if not validator.validate(request.destination):
-        raise HTTPException(status_code=500, detail=f"Could not confirm quantum route to {request.destination}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not confirm quantum route to {request.destination}",
+        )
 
     pydirectinput.press(starmap["key_close"])
     pydirectinput.press(starmap["key_quantum"])

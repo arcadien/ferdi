@@ -9,10 +9,10 @@ class RouteValidator(ABC):
     @abstractmethod
     def validate(self, destination: str) -> bool:
         """Validate the quantum route was set correctly.
-        
+
         Args:
             destination: The destination name.
-            
+
         Returns:
             True if validation succeeds, False otherwise.
         """

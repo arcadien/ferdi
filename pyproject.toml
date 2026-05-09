@@ -27,4 +27,8 @@ dev = [
     "httpx",
     "pyyaml",
     "pre-commit",
+    "ruff",
+    "uv",
 ]
+
+[tool.ruff]

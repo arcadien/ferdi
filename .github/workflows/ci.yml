@@ -17,6 +17,10 @@ jobs:
         run: sudo apt-get install -y libportaudio2
       - name: Install dependencies
         run: uv sync --extra dev
+      - name: Lint with ruff
+        run: uv run ruff check ferdi/ tests/
+      - name: Format check with ruff
+        run: uv run ruff format --check ferdi/ tests/
       - name: Validate conventional commits
         if: github.event_name == 'push'
         run: |
