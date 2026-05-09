@@ -15,6 +15,7 @@ except Exception:
     pydirectinput.typewrite = lambda *a, **kw: None
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from ferdi.screenshot import capture_screen
@@ -46,8 +47,11 @@ def serve():
 
 @app.post("/snapshot")
 def post_snapshot():
-    path = capture_screen()
-    return {"path": str(path).replace("\\", "/")}
+    try:
+        path = capture_screen()
+        return {"path": str(path).replace("\\", "/")}
+    except OSError as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.post("/command")
