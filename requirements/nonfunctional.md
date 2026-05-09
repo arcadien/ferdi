@@ -46,3 +46,24 @@ The quantum-route endpoint must calculate absolute screen coordinates from perce
 - [ ] All UI coordinate values in the implementation use this percentage-based approach
 - [ ] Tests verify correct conversion at multiple resolutions (e.g., 1920x1080, 2560x1440)
 - [ ] Configuration documentation explains the percentage format clearly
+
+### NFR-003 — Ruff linter and formatter
+
+- **Date:** 2026-05-05
+- **Status:** Validated
+- **Validated:** 2026-05-05
+- **Spec:** SPEC-012
+
+**Non-functional requirement:**
+All Python source files must pass `ruff check` (lint) and `ruff format --check` (format) with default settings. Ruff acts as both the linter and the formatter, replacing any ad-hoc style enforcement.
+
+**Description:**
+Ruff is a high-performance, Rust-based Python linter and formatter that replaces multiple tools (pylint, black, isort, flake8, etc.) with a single, fast, unified tool. The ferdi project adopts ruff to enforce consistent code style and catch common errors automatically. Ruff is installed as a dev dependency, configured with default settings (no custom rule overrides), and integrated into the pre-commit workflow and CI pipeline. This ensures that all code merged into main passes both linting and formatting checks.
+
+**Acceptance criteria:**
+- [ ] `ruff` is listed as a dev dependency in `pyproject.toml`
+- [ ] `ruff check ferdi/ tests/` exits 0 on the codebase
+- [ ] `ruff format --check ferdi/ tests/` exits 0 on the codebase
+- [ ] Pre-commit hook `ruff check --fix` runs before each commit
+- [ ] Pre-commit hook `ruff format` runs before each commit
+- [ ] CI workflow includes both `ruff check` and `ruff format --check` steps
