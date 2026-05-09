@@ -46,20 +46,22 @@ def ci_workflow(project_root):
 def test_nfr003_ruff_installed_as_dev_dependency(pyproject_toml):
     """Verify ruff is listed as a dev dependency in pyproject.toml."""
     # Look for ruff in the optional-dependencies dev section
-    assert "[project.optional-dependencies]" in pyproject_toml, \
+    assert "[project.optional-dependencies]" in pyproject_toml, (
         "pyproject.toml must have optional-dependencies section"
+    )
 
     # Extract the dev dependencies block
     dev_section = re.search(
-        r'\[project\.optional-dependencies\].*?dev\s*=\s*\[(.*?)\]',
+        r"\[project\.optional-dependencies\].*?dev\s*=\s*\[(.*?)\]",
         pyproject_toml,
-        re.DOTALL
+        re.DOTALL,
     )
     assert dev_section, "Could not find dev dependencies in pyproject.toml"
 
     dev_deps = dev_section.group(1)
-    assert "ruff" in dev_deps.lower(), \
+    assert "ruff" in dev_deps.lower(), (
         "ruff must be listed in [project.optional-dependencies] dev section"
+    )
 
 
 def test_nfr003_ruff_check_exits_zero(project_root):
@@ -68,22 +70,34 @@ def test_nfr003_ruff_check_exits_zero(project_root):
         [sys.executable, "-m", "uv", "run", "ruff", "check", "ferdi/", "tests/"],
         cwd=project_root,
         capture_output=True,
-        text=True
+        text=True,
     )
-    assert result.returncode == 0, \
+    assert result.returncode == 0, (
         f"ruff check failed with code {result.returncode}:\n{result.stdout}\n{result.stderr}"
+    )
 
 
 def test_nfr003_ruff_format_check_exits_zero(project_root):
     """Verify ruff format --check ferdi/ tests/ exits with code 0."""
     result = subprocess.run(
-        [sys.executable, "-m", "uv", "run", "ruff", "format", "--check", "ferdi/", "tests/"],
+        [
+            sys.executable,
+            "-m",
+            "uv",
+            "run",
+            "ruff",
+            "format",
+            "--check",
+            "ferdi/",
+            "tests/",
+        ],
         cwd=project_root,
         capture_output=True,
-        text=True
+        text=True,
     )
-    assert result.returncode == 0, \
+    assert result.returncode == 0, (
         f"ruff format --check failed with code {result.returncode}:\n{result.stdout}\n{result.stderr}"
+    )
 
 
 def test_nfr003_precommit_ruff_check_configured(precommit_config):
@@ -100,8 +114,9 @@ def test_nfr003_precommit_ruff_check_configured(precommit_config):
                 if hook.get("id") == "ruff":
                     ruff_hooks.append(hook)
 
-    assert len(ruff_hooks) > 0, \
+    assert len(ruff_hooks) > 0, (
         "No ruff hook with id 'ruff' found in .pre-commit-config.yaml"
+    )
 
     ruff_hook = ruff_hooks[0]
     assert "args" in ruff_hook, "ruff hook must have args"
@@ -124,8 +139,7 @@ def test_nfr003_precommit_ruff_format_configured(precommit_config):
                 if hook.get("id") == "ruff-format":
                     format_hooks.append(hook)
 
-    assert len(format_hooks) > 0, \
-        "No ruff-format hook found in .pre-commit-config.yaml"
+    assert len(format_hooks) > 0, "No ruff-format hook found in .pre-commit-config.yaml"
 
 
 def test_nfr003_ci_includes_ruff_check_step(ci_workflow):
@@ -149,8 +163,9 @@ def test_nfr003_ci_includes_ruff_check_step(ci_workflow):
             ruff_check_step = step
             break
 
-    assert ruff_check_step is not None, \
+    assert ruff_check_step is not None, (
         "CI workflow must include a step with 'ruff check' in its run field"
+    )
 
 
 def test_nfr003_ci_includes_ruff_format_step(ci_workflow):
@@ -174,11 +189,13 @@ def test_nfr003_ci_includes_ruff_format_step(ci_workflow):
             ruff_format_step = step
             break
 
-    assert ruff_format_step is not None, \
+    assert ruff_format_step is not None, (
         "CI workflow must include a step with 'ruff format --check' in its run field"
+    )
 
 
 def test_nfr003_default_ruff_config_applies(pyproject_toml):
     """Verify [tool.ruff] section exists in pyproject.toml."""
-    assert "[tool.ruff]" in pyproject_toml, \
+    assert "[tool.ruff]" in pyproject_toml, (
         "pyproject.toml must have [tool.ruff] section for ruff configuration"
+    )

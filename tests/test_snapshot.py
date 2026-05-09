@@ -21,6 +21,7 @@ client = TestClient(app)
 
 # --- Acceptance Criterion 1: POST /snapshot endpoint exists ---
 
+
 def test_brq003_snapshot_endpoint_exists():
     """POST /snapshot endpoint must exist and accept requests."""
     response = client.post("/snapshot")
@@ -29,6 +30,7 @@ def test_brq003_snapshot_endpoint_exists():
 
 
 # --- Acceptance Criterion 2: Returns HTTP 200 with JSON body containing path field ---
+
 
 def test_brq003_returns_200_with_json_body():
     """POST /snapshot must return HTTP 200 with JSON body."""
@@ -57,6 +59,7 @@ def test_brq003_response_contains_path_field():
 
 
 # --- Acceptance Criterion 3: Path matches format screenshots/YYYY-MM-DD_HH-MM-SS.png ---
+
 
 def test_brq003_path_matches_timestamp_format():
     """The 'path' field must match format screenshots/YYYY-MM-DD_HH-MM-SS.png."""
@@ -98,10 +101,13 @@ def test_brq003_path_timestamp_is_parseable():
     try:
         datetime.strptime(timestamp_str, "%Y-%m-%d_%H-%M-%S")
     except ValueError:
-        assert False, f"Timestamp '{timestamp_str}' cannot be parsed with format '%Y-%m-%d_%H-%M-%S'"
+        assert False, (
+            f"Timestamp '{timestamp_str}' cannot be parsed with format '%Y-%m-%d_%H-%M-%S'"
+        )
 
 
 # --- Acceptance Criterion 4: Screenshot file exists on disk after call ---
+
 
 def test_brq003_file_exists_on_disk_after_call():
     """The screenshot file must exist on disk after POST /snapshot returns."""
@@ -117,11 +123,14 @@ def test_brq003_file_exists_on_disk_after_call():
     file_path = Path(data["path"])
 
     # File must exist
-    assert file_path.exists(), f"File {file_path} must exist on disk after POST /snapshot"
+    assert file_path.exists(), (
+        f"File {file_path} must exist on disk after POST /snapshot"
+    )
     assert file_path.is_file(), f"{file_path} must be a regular file"
 
 
 # --- Acceptance Criterion 5: screenshots/ directory created automatically if absent ---
+
 
 def test_brq003_screenshots_dir_created_automatically():
     """The screenshots/ directory must be created automatically if it does not exist."""
@@ -133,7 +142,9 @@ def test_brq003_screenshots_dir_created_automatically():
             file.unlink()
         screenshots_dir.rmdir()
 
-    assert not screenshots_dir.exists(), "screenshots/ directory must not exist before test"
+    assert not screenshots_dir.exists(), (
+        "screenshots/ directory must not exist before test"
+    )
 
     with patch("ferdi.screenshot.ImageGrab.grab") as mock_grab:
         mock_image = MagicMock()
@@ -142,11 +153,14 @@ def test_brq003_screenshots_dir_created_automatically():
         response = client.post("/snapshot")
 
     assert response.status_code == 200
-    assert screenshots_dir.exists(), "screenshots/ directory must be created automatically"
+    assert screenshots_dir.exists(), (
+        "screenshots/ directory must be created automatically"
+    )
     assert screenshots_dir.is_dir(), "screenshots/ must be a directory"
 
 
 # --- Acceptance Criterion 6: Capture logic is a reusable function ---
+
 
 def test_brq003_capture_screen_is_reusable_function():
     """The capture_screen() function must be importable and callable directly."""
@@ -187,7 +201,9 @@ def test_brq003_capture_screen_creates_screenshots_directory():
             file.unlink()
         screenshots_dir.rmdir()
 
-    assert not screenshots_dir.exists(), "screenshots/ directory must not exist before test"
+    assert not screenshots_dir.exists(), (
+        "screenshots/ directory must not exist before test"
+    )
 
     with patch("ferdi.screenshot.ImageGrab.grab") as mock_grab:
         mock_image = MagicMock()
@@ -195,7 +211,9 @@ def test_brq003_capture_screen_creates_screenshots_directory():
 
         capture_screen()
 
-    assert screenshots_dir.exists(), "capture_screen() must create screenshots/ directory"
+    assert screenshots_dir.exists(), (
+        "capture_screen() must create screenshots/ directory"
+    )
 
 
 def test_brq003_capture_screen_uses_imagegrab():
@@ -222,6 +240,7 @@ def test_brq003_capture_screen_calls_image_save():
 
 # --- Additional integration tests ---
 
+
 def test_brq003_multiple_snapshots_have_different_filenames():
     """Multiple consecutive snapshots must have different filenames (different timestamps)."""
     with patch("ferdi.screenshot.ImageGrab.grab") as mock_grab:
@@ -231,6 +250,7 @@ def test_brq003_multiple_snapshots_have_different_filenames():
         response1 = client.post("/snapshot")
         # Ensure timestamp differs (small sleep)
         import time
+
         time.sleep(0.1)
         response2 = client.post("/snapshot")
 

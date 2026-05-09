@@ -7,7 +7,6 @@ fail (RED) until ferdi/stt/ is created.
 
 import ast
 import inspect
-import os
 from pathlib import Path
 
 
@@ -33,7 +32,9 @@ def test_trq005_static_stt_implements_provider():
 
     instance = StaticSTT("raise shields")
 
-    assert isinstance(instance, STTProvider), "StaticSTT must be an instance of STTProvider"
+    assert isinstance(instance, STTProvider), (
+        "StaticSTT must be an instance of STTProvider"
+    )
     assert instance.listen() == "raise shields", (
         "StaticSTT.listen() must return the string passed at construction"
     )

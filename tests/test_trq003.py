@@ -41,7 +41,9 @@ def test_trq003_precommit_config_includes_conventional_hook():
             found_conventional = True
             break
 
-    assert found_conventional, "conventional-pre-commit hook not found in .pre-commit-config.yaml"
+    assert found_conventional, (
+        "conventional-pre-commit hook not found in .pre-commit-config.yaml"
+    )
 
 
 def test_trq003_precommit_hook_has_commit_msg_type():
@@ -54,7 +56,9 @@ def test_trq003_precommit_hook_has_commit_msg_type():
     for repo in config["repos"]:
         if "conventional-pre-commit" in repo.get("repo", ""):
             hooks = repo.get("hooks", [])
-            assert len(hooks) > 0, "conventional-pre-commit must have at least one hook definition"
+            assert len(hooks) > 0, (
+                "conventional-pre-commit must have at least one hook definition"
+            )
 
             # Check that at least one hook is configured for commit-msg
             found_commit_msg = False
@@ -67,7 +71,9 @@ def test_trq003_precommit_hook_has_commit_msg_type():
             assert found_commit_msg, "conventional-pre-commit hook must be configured"
             return
 
-    raise AssertionError("conventional-pre-commit hook not found in .pre-commit-config.yaml")
+    raise AssertionError(
+        "conventional-pre-commit hook not found in .pre-commit-config.yaml"
+    )
 
 
 def test_trq003_precommit_install_command_available():
@@ -82,11 +88,13 @@ def test_trq003_precommit_install_command_available():
             ["pre-commit", "install", "--hook-type", "commit-msg"],
             cwd=os.getcwd(),
             capture_output=True,
-            timeout=10
+            timeout=10,
         )
         # If pre-commit is not installed, the test can still pass (dependency check is separate)
         # We're mainly checking that the command syntax is correct
-        assert result.returncode in [0, 1], f"pre-commit install failed with code {result.returncode}: {result.stderr.decode()}"
+        assert result.returncode in [0, 1], (
+            f"pre-commit install failed with code {result.returncode}: {result.stderr.decode()}"
+        )
     except FileNotFoundError:
         # pre-commit not installed yet (will be caught by dependency test)
         pass
@@ -97,14 +105,15 @@ def test_trq003_conventional_commits_format_documented_in_claude():
     claude_path = Path("CLAUDE.md")
     assert claude_path.exists(), "CLAUDE.md does not exist"
 
-    with open(claude_path, "r", encoding='utf-8') as f:
+    with open(claude_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Check for documentation of Conventional Commits
     # Should contain references to the format, allowed types, or the convention itself
     assert "commit" in content.lower(), "CLAUDE.md must mention commits"
-    assert "conventional" in content.lower() or "format" in content.lower(), \
+    assert "conventional" in content.lower() or "format" in content.lower(), (
         "CLAUDE.md must document the Conventional Commits format"
+    )
 
 
 def test_trq003_precommit_in_dev_dependencies():
@@ -117,8 +126,10 @@ def test_trq003_precommit_in_dev_dependencies():
 
     # Text-based check for pre-commit in dev dependencies (Python 3.10 compatible)
     # Look for the dev dependencies section and check for "pre-commit"
-    assert '[project.optional-dependencies]' in content or 'optional-dependencies' in content, \
-        "No optional-dependencies section found in pyproject.toml"
+    assert (
+        "[project.optional-dependencies]" in content
+        or "optional-dependencies" in content
+    ), "No optional-dependencies section found in pyproject.toml"
 
     # Check that pre-commit is mentioned in the file (as part of dev dependencies)
     assert "pre-commit" in content, "pre-commit not found in pyproject.toml"
@@ -144,13 +155,17 @@ def test_trq003_ci_workflow_has_commit_validation_step():
         for step in steps:
             step_str = str(step).lower()
             # Look for commit message validation in various forms
-            if any(term in step_str for term in ["commit", "conventional", "commitlint"]):
+            if any(
+                term in step_str for term in ["commit", "conventional", "commitlint"]
+            ):
                 found_validation = True
                 break
         if found_validation:
             break
 
-    assert found_validation, ".github/workflows/ci.yml must include a step to validate commit messages"
+    assert found_validation, (
+        ".github/workflows/ci.yml must include a step to validate commit messages"
+    )
 
 
 def test_trq003_non_compliant_commit_format_is_invalid():
@@ -170,7 +185,9 @@ def test_trq003_non_compliant_commit_format_is_invalid():
             found_hook = True
             break
 
-    assert found_hook, "conventional-pre-commit hook must be configured to reject non-compliant messages"
+    assert found_hook, (
+        "conventional-pre-commit hook must be configured to reject non-compliant messages"
+    )
 
 
 def test_trq003_compliant_commit_format_examples():
@@ -182,12 +199,15 @@ def test_trq003_compliant_commit_format_examples():
     - docs: description
     """
     claude_path = Path("CLAUDE.md")
-    with open(claude_path, "r", encoding='utf-8') as f:
+    with open(claude_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Verify documentation includes examples or format specification
-    assert "type" in content.lower() or "feat" in content.lower() or "fix" in content.lower(), \
-        "CLAUDE.md must document conventional commit types or provide examples"
+    assert (
+        "type" in content.lower()
+        or "feat" in content.lower()
+        or "fix" in content.lower()
+    ), "CLAUDE.md must document conventional commit types or provide examples"
 
 
 def test_trq003_req_type_in_allowed_types():
@@ -223,7 +243,9 @@ def test_trq003_req_type_in_allowed_types():
                         found_req_type = True
                     break
 
-    assert found_req_type, "'req' type must be configured as an allowed type in the conventional-pre-commit hook"
+    assert found_req_type, (
+        "'req' type must be configured as an allowed type in the conventional-pre-commit hook"
+    )
 
 
 def test_trq003_custom_hook_exists_for_req_enforcement():
@@ -256,7 +278,9 @@ def test_trq003_custom_hook_exists_for_req_enforcement():
                     found_req_hook = True
                     break
 
-    assert found_req_hook, "A local hook with id 'check-req-commit' of type 'commit-msg' must exist to enforce requirement file commits"
+    assert found_req_hook, (
+        "A local hook with id 'check-req-commit' of type 'commit-msg' must exist to enforce requirement file commits"
+    )
 
 
 def test_trq003_claude_documents_req_isolation():
@@ -269,7 +293,7 @@ def test_trq003_claude_documents_req_isolation():
     claude_path = Path("CLAUDE.md")
     assert claude_path.exists(), "CLAUDE.md does not exist"
 
-    with open(claude_path, "r", encoding='utf-8') as f:
+    with open(claude_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Assert documentation about req type for requirement files
@@ -277,7 +301,10 @@ def test_trq003_claude_documents_req_isolation():
 
     # Assert that it's documented for requirements files
     content_lower = content.lower()
-    req_for_requirements = ("req" in content_lower and ("requirements" in content_lower or "specification" in content_lower))
+    req_for_requirements = "req" in content_lower and (
+        "requirements" in content_lower or "specification" in content_lower
+    )
 
-    assert req_for_requirements, \
+    assert req_for_requirements, (
         "CLAUDE.md must document that requirements.md and technical-specifications.md changes use the 'req' commit type"
+    )

@@ -30,7 +30,9 @@ class TestReleaseWorkflowFile:
             "workflows",
             "release.yml",
         )
-        assert os.path.isfile(workflow_path), f"release.yml not found at {workflow_path}"
+        assert os.path.isfile(workflow_path), (
+            f"release.yml not found at {workflow_path}"
+        )
 
     def test_trq004_release_workflow_has_workflow_dispatch_trigger(self):
         """The release workflow must have a workflow_dispatch trigger."""
@@ -46,9 +48,9 @@ class TestReleaseWorkflowFile:
 
         on_triggers = workflow.get("on") or workflow.get(True)
         assert on_triggers is not None, "Workflow must have an 'on' trigger definition"
-        assert (
-            "workflow_dispatch" in on_triggers
-        ), "Workflow must have workflow_dispatch trigger"
+        assert "workflow_dispatch" in on_triggers, (
+            "Workflow must have workflow_dispatch trigger"
+        )
 
     def test_trq004_release_workflow_has_version_input(self):
         """The release workflow must have a required 'version' input."""
@@ -63,15 +65,15 @@ class TestReleaseWorkflowFile:
             workflow = yaml.safe_load(f)
 
         on_triggers = workflow.get("on") or workflow.get(True)
-        assert (
-            "workflow_dispatch" in on_triggers
-        ), "workflow_dispatch trigger must exist"
+        assert "workflow_dispatch" in on_triggers, (
+            "workflow_dispatch trigger must exist"
+        )
         dispatch_config = on_triggers["workflow_dispatch"]
         assert "inputs" in dispatch_config, "workflow_dispatch must have inputs"
         assert "version" in dispatch_config["inputs"], "version input must be defined"
-        assert (
-            dispatch_config["inputs"]["version"].get("required") is True
-        ), "version input must be required"
+        assert dispatch_config["inputs"]["version"].get("required") is True, (
+            "version input must be required"
+        )
 
     def test_trq004_release_workflow_uses_git_cliff(self):
         """The release workflow must use git-cliff to generate release notes."""
@@ -85,9 +87,9 @@ class TestReleaseWorkflowFile:
         with open(workflow_path, "r", encoding="utf-8") as f:
             workflow_content = f.read()
 
-        assert (
-            "git-cliff" in workflow_content or "cliff" in workflow_content
-        ), "Workflow must reference git-cliff for release notes generation"
+        assert "git-cliff" in workflow_content or "cliff" in workflow_content, (
+            "Workflow must reference git-cliff for release notes generation"
+        )
 
     def test_trq004_release_workflow_creates_git_tag(self):
         """The release workflow must create and push a git tag."""
@@ -102,13 +104,12 @@ class TestReleaseWorkflowFile:
             workflow_content = f.read()
 
         # Check for git tag creation and push operations
-        assert (
-            "git tag" in workflow_content
-            or "tag" in workflow_content.lower()
-        ), "Workflow must create git tags"
-        assert (
-            "git push" in workflow_content or "push" in workflow_content.lower()
-        ), "Workflow must push git tags"
+        assert "git tag" in workflow_content or "tag" in workflow_content.lower(), (
+            "Workflow must create git tags"
+        )
+        assert "git push" in workflow_content or "push" in workflow_content.lower(), (
+            "Workflow must push git tags"
+        )
 
     def test_trq004_release_workflow_publishes_release(self):
         """The release workflow must publish a GitHub Release using gh CLI or softprops/action-gh-release."""
@@ -126,7 +127,9 @@ class TestReleaseWorkflowFile:
         assert (
             "gh release" in workflow_content
             or "softprops/action-gh-release" in workflow_content
-        ), "Workflow must publish GitHub Release using gh CLI or softprops/action-gh-release"
+        ), (
+            "Workflow must publish GitHub Release using gh CLI or softprops/action-gh-release"
+        )
 
     def test_trq004_release_workflow_can_be_triggered_manually(self):
         """The release workflow must be triggerable from GitHub Actions UI."""
@@ -142,9 +145,9 @@ class TestReleaseWorkflowFile:
 
         # workflow_dispatch enables manual triggering
         on_triggers = workflow.get("on") or workflow.get(True)
-        assert (
-            on_triggers is not None and "workflow_dispatch" in on_triggers
-        ), "workflow_dispatch trigger enables manual triggering from GitHub UI"
+        assert on_triggers is not None and "workflow_dispatch" in on_triggers, (
+            "workflow_dispatch trigger enables manual triggering from GitHub UI"
+        )
 
 
 class TestCliffConfiguration:
@@ -152,16 +155,12 @@ class TestCliffConfiguration:
 
     def test_trq004_cliff_config_file_exists(self):
         """A cliff.toml configuration file must exist at the repository root."""
-        cliff_path = os.path.join(
-            os.path.dirname(__file__), "..", "cliff.toml"
-        )
+        cliff_path = os.path.join(os.path.dirname(__file__), "..", "cliff.toml")
         assert os.path.isfile(cliff_path), f"cliff.toml not found at {cliff_path}"
 
     def test_trq004_cliff_config_is_valid_toml(self):
         """The cliff.toml file must be valid TOML."""
-        cliff_path = os.path.join(
-            os.path.dirname(__file__), "..", "cliff.toml"
-        )
+        cliff_path = os.path.join(os.path.dirname(__file__), "..", "cliff.toml")
         try:
             with open(cliff_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -173,26 +172,26 @@ class TestCliffConfiguration:
 
     def test_trq004_cliff_config_configures_commit_grouping(self):
         """The cliff.toml must configure conventional commit grouping (feat, fix, etc.)."""
-        cliff_path = os.path.join(
-            os.path.dirname(__file__), "..", "cliff.toml"
-        )
+        cliff_path = os.path.join(os.path.dirname(__file__), "..", "cliff.toml")
         with open(cliff_path, "r", encoding="utf-8") as f:
             changelog_text = f.read()
 
-        assert "[changelog]" in changelog_text, "cliff.toml must have [changelog] section"
+        assert "[changelog]" in changelog_text, (
+            "cliff.toml must have [changelog] section"
+        )
         # Check for commit type configurations (feat, fix, etc.)
+        assert "feat" in changelog_text or "Features" in changelog_text, (
+            "cliff.toml must configure feat (Features) grouping"
+        )
         assert (
-            "feat" in changelog_text or "Features" in changelog_text
-        ), "cliff.toml must configure feat (Features) grouping"
-        assert (
-            "fix" in changelog_text or "Bug Fixes" in changelog_text or "Fixes" in changelog_text
+            "fix" in changelog_text
+            or "Bug Fixes" in changelog_text
+            or "Fixes" in changelog_text
         ), "cliff.toml must configure fix (Bug Fixes) grouping"
 
     def test_trq004_cliff_config_excludes_non_user_facing_types(self):
         """The cliff.toml must exclude non-user-facing types (chore, ci, style, refactor, test)."""
-        cliff_path = os.path.join(
-            os.path.dirname(__file__), "..", "cliff.toml"
-        )
+        cliff_path = os.path.join(os.path.dirname(__file__), "..", "cliff.toml")
         with open(cliff_path, "r", encoding="utf-8") as f:
             cliff_content = f.read()
 
@@ -202,7 +201,9 @@ class TestCliffConfiguration:
             "chore" in cliff_content
             or "ci" in cliff_content
             or "style" in cliff_content
-        ), "cliff.toml must reference non-user-facing types (chore, ci, style) for exclusion"
+        ), (
+            "cliff.toml must reference non-user-facing types (chore, ci, style) for exclusion"
+        )
 
 
 class TestChangelogFile:
@@ -210,12 +211,10 @@ class TestChangelogFile:
 
     def test_trq004_no_changelog_md_file(self):
         """No CHANGELOG.md file must be committed to the repository."""
-        changelog_path = os.path.join(
-            os.path.dirname(__file__), "..", "CHANGELOG.md"
+        changelog_path = os.path.join(os.path.dirname(__file__), "..", "CHANGELOG.md")
+        assert not os.path.isfile(changelog_path), (
+            "CHANGELOG.md must not be committed to the repository"
         )
-        assert (
-            not os.path.isfile(changelog_path)
-        ), "CHANGELOG.md must not be committed to the repository"
 
 
 class TestReleaseNotesGeneration:
@@ -234,19 +233,17 @@ class TestReleaseNotesGeneration:
             workflow_content = f.read()
 
         # Verify that git-cliff is invoked to generate release notes
-        assert (
-            "git-cliff" in workflow_content or "cliff" in workflow_content.lower()
-        ), "Workflow must invoke git-cliff to generate release notes"
+        assert "git-cliff" in workflow_content or "cliff" in workflow_content.lower(), (
+            "Workflow must invoke git-cliff to generate release notes"
+        )
         # Check for output or configuration being passed to git-cliff
-        assert (
-            "cliff.toml" in workflow_content or "--config" in workflow_content
-        ), "Workflow must reference cliff.toml configuration"
+        assert "cliff.toml" in workflow_content or "--config" in workflow_content, (
+            "Workflow must reference cliff.toml configuration"
+        )
 
     def test_trq004_release_notes_exclude_non_user_facing_types(self):
         """The generated release notes must exclude non-user-facing types (chore, ci, style)."""
-        cliff_path = os.path.join(
-            os.path.dirname(__file__), "..", "cliff.toml"
-        )
+        cliff_path = os.path.join(os.path.dirname(__file__), "..", "cliff.toml")
         with open(cliff_path, "r", encoding="utf-8") as f:
             cliff_config = f.read()
 

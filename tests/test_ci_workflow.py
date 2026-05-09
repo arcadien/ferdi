@@ -20,7 +20,9 @@ import pathlib
 import pytest
 import yaml
 
-WORKFLOW_PATH = pathlib.Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
+WORKFLOW_PATH = (
+    pathlib.Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
+)
 
 
 @pytest.fixture(scope="module")
@@ -34,6 +36,7 @@ def workflow_yaml():
 # AC1 — File existence
 # ---------------------------------------------------------------------------
 
+
 def test_trq002_workflow_file_exists():
     """AC1: .github/workflows/ci.yml must exist in the repository."""
     assert WORKFLOW_PATH.exists(), (
@@ -45,6 +48,7 @@ def test_trq002_workflow_file_exists():
 # ---------------------------------------------------------------------------
 # AC2 — Trigger: push and pull_request
 # ---------------------------------------------------------------------------
+
 
 def test_trq002_trigger_on_push(workflow_yaml):
     """AC2a: Workflow must be triggered on push events."""
@@ -75,6 +79,7 @@ def test_trq002_trigger_on_pull_request(workflow_yaml):
 # AC3 — Runner: ubuntu-latest
 # ---------------------------------------------------------------------------
 
+
 def test_trq002_runs_on_ubuntu_latest(workflow_yaml):
     """AC3: At least one job must declare runs-on: ubuntu-latest."""
     jobs = workflow_yaml.get("jobs", {})
@@ -88,6 +93,7 @@ def test_trq002_runs_on_ubuntu_latest(workflow_yaml):
 # ---------------------------------------------------------------------------
 # AC4 — Python 3.11 via actions/setup-python@v5
 # ---------------------------------------------------------------------------
+
 
 def test_trq002_setup_python_action_used(workflow_yaml):
     """AC4a: astral-sh/setup-uv must appear in at least one job step."""
@@ -121,6 +127,7 @@ def test_trq002_python_version_is_311(workflow_yaml):
 # AC5 — Dependency installation via pip install -e ".[dev]"
 # ---------------------------------------------------------------------------
 
+
 def test_trq002_install_dev_dependencies(workflow_yaml):
     """AC5: A workflow step must run 'uv sync --dev'."""
     jobs = workflow_yaml.get("jobs", {})
@@ -132,14 +139,14 @@ def test_trq002_install_dev_dependencies(workflow_yaml):
                 found = True
                 break
     assert found, (
-        "No step contains 'uv sync --extra dev'. "
-        "Dependencies must be installed via uv."
+        "No step contains 'uv sync --extra dev'. Dependencies must be installed via uv."
     )
 
 
 # ---------------------------------------------------------------------------
 # AC6 — Test execution with pytest tests/ -v
 # ---------------------------------------------------------------------------
+
 
 def test_trq002_pytest_command(workflow_yaml):
     """AC6: A workflow step must run 'uv run pytest tests/ -v'."""
@@ -160,6 +167,7 @@ def test_trq002_pytest_command(workflow_yaml):
 # ---------------------------------------------------------------------------
 # Skipped: GitHub-infrastructure-only criteria
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.skip(
     reason=(
