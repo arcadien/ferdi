@@ -1158,7 +1158,7 @@ uv add pydirectinput
 1. Create `ferdi/validators/` package with `__init__.py`, `base.py`, `bypass.py`, `claude_vision.py`.
 2. Create `ferdi/quantum_route.py` with the orchestration logic.
 3. Add the `POST /quantum-route` endpoint to `ferdi/main.py`.
-4. Create `etc/sc-config.yaml` and `etc/qt-destinations.txt` with example content.
+4. Create `etc/sc-config.yaml` and `etc/qt-destinations.yaml` with example content.
 5. Update `pyproject.toml` to add `pydirectinput` and `pyyaml` dependencies.
 6. Write acceptance tests in `tests/test_quantum_route.py`.
 
