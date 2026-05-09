@@ -26,6 +26,6 @@ mock_yaml.side_effect = [
 
 **Inline C# assembly references** — In VoiceAttack's "Execute an Inline C# Function" dialog, assemblies like `System.Net.Http` must be added in the References section of the dialog UI — not via `#r` or `//reference` directives in the code itself. The user ran into CS1069 errors before discovering this.
 
-## Pending work
+## Documentation
 
-- **Add ruff linter** — Requested during the spike/whisper-stt branch. Propose as a formal NFR, document → validate → TDD cycle. Install ruff, add config to `pyproject.toml`, wire into pre-commit hooks.
+**Fix all occurrences when correcting a stale reference** — When requirements-analyst fixes a stale file reference (e.g. `qt-destinations.txt` → `.yaml`), grep the entire `technical-specifications.md` for the old string before committing. A partial fix will be caught by the docs-reviewer on the next run, requiring an extra cycle.
