@@ -11,6 +11,7 @@ Vocal agent for Star Citizen: VoiceAttack → FastAPI → Claude Vision → pydi
 All commits follow the **Conventional Commits** format — see `.claude/workflow.md` for the full specification, allowed types, branch management rules, TDD cycle, and agent architecture.
 
 @.claude/workflow.md
+@.claude/notes.md
 
 ## Repository layout
 
