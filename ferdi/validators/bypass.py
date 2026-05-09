@@ -8,10 +8,10 @@ class BypassValidator(RouteValidator):
 
     def validate(self, destination: str) -> bool:
         """Always returns True regardless of destination.
-        
+
         Args:
             destination: The destination name (ignored).
-            
+
         Returns:
             Always True.
         """

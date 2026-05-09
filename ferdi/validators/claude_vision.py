@@ -8,10 +8,10 @@ class ClaudeVisionValidator(RouteValidator):
 
     def validate(self, destination: str) -> bool:
         """Validate using Claude Vision (not yet implemented).
-        
+
         Args:
             destination: The destination name.
-            
+
         Returns:
             True if validation succeeds, False otherwise.
         """

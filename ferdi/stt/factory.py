@@ -19,7 +19,9 @@ def build_stt_provider() -> STTProvider:
         model = os.environ.get("WHISPER_MODEL", "base")
         initial_prompt = os.environ.get("WHISPER_INITIAL_PROMPT") or None
         record_seconds = float(os.environ.get("WHISPER_RECORD_SECONDS", "5.0"))
-        return WhisperSTT(model=model, initial_prompt=initial_prompt, record_seconds=record_seconds)
+        return WhisperSTT(
+            model=model, initial_prompt=initial_prompt, record_seconds=record_seconds
+        )
 
     if provider_name == "webapi":
         from ferdi.stt.webapi_stt import WebAPISTT  # noqa: PLC0415
