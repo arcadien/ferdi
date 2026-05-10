@@ -45,11 +45,11 @@ def serve():
     uvicorn.run("ferdi.main:app", host="0.0.0.0", port=8000)
 
 
-@app.post("/snapshot")
-def post_snapshot():
+@app.post("/screenshot")
+def post_screenshot():
     try:
-        path = capture_screen()
-        return {"path": str(path).replace("\\", "/")}
+        capture_screen()
+        return {"message": "screen is shot"}
     except OSError as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
