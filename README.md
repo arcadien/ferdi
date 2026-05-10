@@ -1,12 +1,12 @@
 # ferdi
 
-Agent vocal pour Star Citizen. Tu parles, ferdi voit l'écran et clique à ta place.
+Voice agent for Star Citizen. You speak, ferdi reads the screen and clicks for you.
 
-**Pipeline :** VoiceAttack → FastAPI → Claude Vision → pydirectinput
+**Pipeline:** VoiceAttack → FastAPI → Claude Vision → pydirectinput
 
-## Prérequis
+## Requirements
 
-- [uv](https://docs.astral.sh/uv/) installé
+- [uv](https://docs.astral.sh/uv/) installed
 - Python 3.11+
 
 ## Installation
@@ -15,13 +15,13 @@ Agent vocal pour Star Citizen. Tu parles, ferdi voit l'écran et clique à ta pl
 uv sync --extra dev
 ```
 
-## Démarrage
+## Start
 
 ```bash
 uv run serve
 ```
 
-Le serveur démarre sur `http://localhost:8000`.
+Server runs on `http://localhost:8000`.
 
 ## Status
 

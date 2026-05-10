@@ -24,7 +24,9 @@ mock_yaml.side_effect = [
 
 ## VoiceAttack
 
-**Inline C# assembly references** — In VoiceAttack's "Execute an Inline C# Function" dialog, assemblies like `System.Net.Http` must be added in the References section of the dialog UI — not via `#r` or `//reference` directives in the code itself. The user ran into CS1069 errors before discovering this.
+**Inline C# assembly references** — In VoiceAttack's "Execute an Inline C# Function" dialog, assemblies must be added in the "Referenced Assemblies" text box above the code editor — not via `#r` or `//reference` directives in the code itself.
+
+VoiceAttack runs on .NET Core (not .NET Framework). Use `WebClient` for HTTP calls. Required assemblies: `System.dll` + `System.Private.Uri`. Avoid `System.Net.Http` — it triggers CS0012.
 
 ## Documentation
 
