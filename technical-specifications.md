@@ -1404,7 +1404,7 @@ Each acceptance criterion maps to a pytest test in `tests/test_destination_mappi
 
 ---
 
-## SPEC-011 — Screen Snapshot Endpoint (BRQ-003)
+## SPEC-011 — Screen Screenshot Endpoint (BRQ-003)
 
 - **Requirement:** BRQ-003
 - **Date:** 2026-05-05
@@ -1415,32 +1415,32 @@ Each acceptance criterion maps to a pytest test in `tests/test_destination_mappi
 
 ### Overview
 
-The ferdi backend exposes a POST endpoint that captures the full screen as a PNG image and saves it to a timestamped file in the `screenshots/` directory. The endpoint returns the relative path to the saved file, which can be used by clients for subsequent processing (e.g., Claude Vision analysis). The screen capture logic is implemented as a reusable function, decoupled from the HTTP handler, so it can be called by other features in the future without duplicating code.
+The ferdi backend exposes a POST endpoint that captures the full screen as a PNG image and saves it to a timestamped file in the `screenshots/` directory. The endpoint returns a confirmation message to the client. The screen capture logic is implemented as a reusable function, decoupled from the HTTP handler, so it can be called by other features in the future without duplicating code.
 
 ### Architecture
 
 ```
 Client (VoiceAttack or other frontend)
         │
-        │  POST http://127.0.0.1:8000/snapshot
+        │  POST http://127.0.0.1:8000/screenshot
         │
         ▼
 ┌──────────────────────────────────┐
 │  ferdi/main.py  (FastAPI)        │
-│  POST /snapshot                  │
+│  POST /screenshot                │
 │  → call capture_screen()         │
 │  → save to screenshots/          │
-│  → return 200 + file path        │
+│  → return 200 + confirmation     │
 └──────────────────────────────────┘
         │
         │  HTTP 200
-        │  {"path": "screenshots/2026-05-05_14-30-22.png"}
+        │  {"message": "screen is shot"}
         │
         ▼
 Client receives response
         │
-        └─ Extract path → use for Claude Vision
-           or other downstream processing
+        └─ Use confirmation message for logging
+           or client-side feedback
 ```
 
 **Components:**
@@ -1448,7 +1448,7 @@ Client receives response
 | Component | Location | Purpose |
 |-----------|----------|---------|
 | Capture function | `ferdi/screenshot.py` | Reusable `capture_screen() -> Path` function |
-| Snapshot endpoint | `ferdi/main.py` | FastAPI POST /snapshot route |
+| Screenshot endpoint | `ferdi/main.py` | FastAPI POST /screenshot route |
 | Pillow (PIL) | PyPI dependency | Image capture via `ImageGrab.grab()` |
 
 ### Dependency Installation
@@ -1463,7 +1463,7 @@ Pillow's `ImageGrab` module works on Windows, macOS, and Linux (with xlib).
 
 ### Endpoint Specification
 
-**Request — POST /snapshot**
+**Request — POST /screenshot**
 
 - No request body required
 - HTTP method: POST
@@ -1472,13 +1472,13 @@ Pillow's `ImageGrab` module works on Windows, macOS, and Linux (with xlib).
 
 ```json
 {
-  "path": "screenshots/2026-05-05_14-30-22.png"
+  "message": "screen is shot"
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `path` | `string` | Relative path to the saved screenshot file (relative to the project root) |
+| `message` | `string` | Confirmation message indicating the screenshot was captured |
 
 ### Reusable Capture Function
 
@@ -1522,14 +1522,14 @@ In `ferdi/main.py`, define a response model and the POST route:
 from pydantic import BaseModel
 from ferdi.screenshot import capture_screen
 
-class SnapshotResponse(BaseModel):
-    path: str
+class ScreenshotResponse(BaseModel):
+    message: str
 
-@app.post("/snapshot")
-def take_snapshot() -> SnapshotResponse:
+@app.post("/screenshot")
+def take_screenshot() -> ScreenshotResponse:
     """Capture the full screen and save to screenshots/ directory."""
-    file_path = capture_screen()
-    return SnapshotResponse(path=str(file_path))
+    capture_screen()
+    return ScreenshotResponse(message="screen is shot")
 ```
 
 ### Files to Create or Modify
@@ -1538,23 +1538,22 @@ def take_snapshot() -> SnapshotResponse:
 |------|--------|---------|
 | `pyproject.toml` | Modify | Add `Pillow` dependency |
 | `ferdi/screenshot.py` | Create | Reusable `capture_screen()` function |
-| `ferdi/main.py` | Modify | Add POST /snapshot endpoint and `SnapshotResponse` model |
-| `tests/test_snapshot.py` | Create | Acceptance tests for BRQ-003 |
+| `ferdi/main.py` | Modify | Add POST /screenshot endpoint and `ScreenshotResponse` model |
+| `tests/test_screenshot.py` | Create | Acceptance tests for BRQ-003 |
 
 ### Testing
 
-Each acceptance criterion maps to a pytest test in `tests/test_snapshot.py`:
+Each acceptance criterion maps to a pytest test in `tests/test_screenshot.py`:
 
 | Criterion | Test name | Validation method |
 |-----------|-----------|-------------------|
-| Endpoint exists and accepts POST | `test_brq003_snapshot_endpoint_exists` | `TestClient.post("/snapshot")` → assert status 200 |
+| Endpoint exists and accepts POST | `test_brq003_screenshot_endpoint_exists` | `TestClient.post("/screenshot")` → assert status 200 |
 | Returns HTTP 200 with JSON body | `test_brq003_returns_200_with_json` | POST → assert status 200 and `response.headers["content-type"]` contains "application/json" |
-| Response contains `path` field | `test_brq003_response_contains_path_field` | POST → assert `"path"` in `response.json()` |
-| Path matches timestamp format | `test_brq003_path_matches_format` | POST → assert `response.json()["path"]` matches regex `screenshots/\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png` |
-| File exists on disk after call | `test_brq003_file_exists_on_disk` | POST → resolve returned path → assert `Path(path).exists()` |
+| Response contains `message` field | `test_brq003_response_contains_message_field` | POST → assert `response.json()["message"] == "screen is shot"` |
+| File exists on disk after call | `test_brq003_file_exists_on_disk` | POST → assert at least one PNG file in `screenshots/` directory |
 | Screenshots directory created automatically | `test_brq003_screenshots_dir_created_automatically` | Delete `screenshots/` before POST → POST → assert `Path("screenshots").exists()` |
 | Capture function is reusable | `test_brq003_capture_function_is_reusable` | Import `capture_screen` directly; call it; assert returned `Path` exists and is a PNG file |
-| Timestamp format matches spec | `test_brq003_timestamp_format_correct` | POST → parse timestamp from path → assert it can be parsed with `strptime(..., "%Y-%m-%d_%H-%M-%S")` |
+| Timestamp format matches spec | `test_brq003_timestamp_format_correct` | POST → verify a file was created; parse timestamp from filename → assert it can be parsed with `strptime(..., "%Y-%m-%d_%H-%M-%S")` |
 
 ---
 
