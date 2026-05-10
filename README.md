@@ -1,6 +1,6 @@
-# ferdi
+# Ferdi
 
-Voice agent for Star Citizen. You speak, ferdi reads the screen and clicks for you.
+Voice agent for Star Citizen. You speak, Ferdi reads the screen and clicks for you.
 
 **Pipeline:** VoiceAttack → FastAPI → Claude Vision → pydirectinput
 
