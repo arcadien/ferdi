@@ -85,6 +85,7 @@ User describes requirement in conversation
 - The full test suite must be GREEN before a requirement is marked `Implemented`.
 - Refactor only happens after all tests are green; tests must stay green throughout.
 - `requirements/` and `technical-specifications.md` must always be sufficient for another agent or developer to re-implement any feature from scratch.
+- **Any change to an existing implemented feature (endpoint rename, response format, behaviour change) must update `requirements/` and `technical-specifications.md` first, before touching code or tests.** Treat it as a new mini-cycle: discuss → update docs → update tests → update code → docs-reviewer → PR.
 
 ### TDD cycle
 

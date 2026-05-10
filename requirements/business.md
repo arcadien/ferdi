@@ -49,7 +49,7 @@ A voice command is sent to the ferdi backend, which automatically opens the star
 - [ ] The endpoint returns a confirmation message on success
 - [ ] The endpoint returns an error message if the route could not be confirmed
 
-### BRQ-003 — Screen snapshot command
+### BRQ-003 — Screen screenshot command
 
 - **Date:** 2026-05-05
 - **Status:** Implemented
@@ -61,12 +61,11 @@ A voice command is sent to the ferdi backend, which automatically opens the star
 The user can trigger a command to capture the full screen as a PNG image. The screenshot is automatically saved to a timestamped file in the `screenshots/` directory for later analysis by Claude Vision.
 
 **Description:**
-A voice command is sent to the ferdi backend via HTTP, which captures the full screen using a cross-platform library. The screenshot is saved to `screenshots/YYYY-MM-DD_HH-MM-SS.png` (with the actual current timestamp). The directory is created automatically if absent. The endpoint returns the file path to the client, which can use it for subsequent Claude Vision analysis or logging. The capture logic is implemented as a reusable function (not inlined in the HTTP handler) so it can be called by other features later.
+A voice command is sent to the ferdi backend via HTTP, which captures the full screen using a cross-platform library. The screenshot is saved to `screenshots/YYYY-MM-DD_HH-MM-SS.png` (with the actual current timestamp). The directory is created automatically if absent. The endpoint returns a confirmation message to the client. The capture logic is implemented as a reusable function (not inlined in the HTTP handler) so it can be called by other features later.
 
 **Acceptance criteria:**
-- [ ] A POST /snapshot endpoint exists
-- [ ] The endpoint returns HTTP 200 with a JSON body containing the `path` field
-- [ ] The returned path matches the format `screenshots/YYYY-MM-DD_HH-MM-SS.png` with the actual timestamp
+- [ ] A POST /screenshot endpoint exists
+- [ ] The endpoint returns HTTP 200 with a JSON body `{"message": "screen is shot"}`
 - [ ] The screenshot file exists on disk after the endpoint returns
 - [ ] The `screenshots/` directory is created automatically if it does not exist
 - [ ] The capture logic is a reusable function, not inlined in the handler
